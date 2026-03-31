@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chapter 7 · Direct Methods · Merged Responsive Edition</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600&family=IM+Fell+English:ital@0;1&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+:root{
+  --ink:#2a1e0f;--ink2:#4a3520;--ink3:#7a6040;
+  --paper:#fffaf0;--paper2:#fff3d8;--paper3:#f8e8bf;--paper4:#ecd59a;
+  --line:rgba(100,70,30,.18);--softline:rgba(100,70,30,.08);
+  --gold:#b08030;--rust:#b86040;--teal:#3a7a72;
+  --blue:#4a6888;--olive:#5a7848;--rose:#9a6070;--purple:#6a5888;
+  --shadow:0 8px 24px rgba(80,55,25,.10);
+  --rad:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Crimson Text','Noto Serif SC','Times New Roman',serif;
+  color:var(--ink);
+  background:var(--paper);
+  min-height:100vh;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(130,90,40,.022) 28px),
+    radial-gradient(ellipse at 8% 12%,rgba(176,128,48,.07) 0%,transparent 40%),
+    radial-gradient(ellipse at 92% 88%,rgba(90,120,72,.06) 0%,transparent 38%),
+    radial-gradient(ellipse at 88% 18%,rgba(74,104,136,.05) 0%,transparent 32%);
+}
+.progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--gold),var(--rust),var(--teal));z-index:999;transition:width .1s;}
+.view{display:none;position:relative;z-index:1;}
+.view.active{display:block;}
+.wrap{width:min(1240px,calc(100vw - 20px));margin:0 auto;}
+@media(max-width:760px){.wrap{width:min(100%,calc(100vw - 14px));}}
+
+/* ── TOPBAR ── */
+.topbar{position:sticky;top:0;z-index:80;background:rgba(253,246,227,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);}
+.topbar-inner{width:min(1240px,calc(100vw - 20px));margin:0 auto;display:flex;align-items:center;gap:10px;justify-content:space-between;padding:11px 0;}
+@media(max-width:760px){.topbar-inner{width:min(100%,calc(100vw - 14px));}}
+.brand{display:flex;align-items:center;gap:10px;}
+.brand-badge{font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:5px 11px;border:1px solid var(--line);border-radius:99px;background:var(--paper2);color:var(--ink3);}
+.brand-title{font-family:'IM Fell English',serif;font-size:19px;}
+.topnav{display:flex;gap:6px;flex-wrap:wrap;}
+.tn{border:1px solid var(--line);background:var(--paper2);color:var(--ink2);padding:7px 13px;border-radius:99px;cursor:pointer;font-family:inherit;font-size:13px;transition:.18s ease;}
+.tn:hover{background:var(--ink);color:var(--paper);}
+.tn.gold{background:var(--gold);color:#fff;border-color:var(--gold);}
+
+/* ══ HOME ══ */
+#home{padding:40px 0 80px;}
+.hero-band{background:var(--paper2);border:1px solid var(--line);border-radius:var(--rad);box-shadow:var(--shadow);padding:32px 28px 28px;margin-bottom:36px;}
+.hero-eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:10px;}
+.hero-h1{font-family:'IM Fell English',serif;font-size:clamp(32px,5vw,50px);line-height:1.1;margin-bottom:14px;}
+.hero-lead{font-size:16.5px;line-height:1.78;color:var(--ink2);max-width:680px;}
+.hero-pills{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px;}
+.pill{font-size:13px;padding:5px 12px;border:1px solid var(--line);border-radius:99px;background:rgba(255,255,255,.4);color:var(--ink2);}
+
+.sec-label{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);font-weight:600;margin-bottom:14px;}
+
+/* chain of methods */
+.chain{display:flex;flex-direction:column;gap:0;position:relative;}
+.chain-rail{position:absolute;left:22px;top:24px;bottom:24px;width:1px;background:linear-gradient(to bottom,transparent,var(--line) 5%,var(--line) 95%,transparent);}
+
+.method-row{position:relative;z-index:1;margin-bottom:0;}
+.m-card{
+  display:grid;grid-template-columns:1fr 188px;
+  border:1px solid var(--line);background:var(--paper2);
+  margin-left:52px;
+  cursor:pointer;transition:box-shadow .2s,transform .15s,border-color .2s;
+  position:relative;overflow:hidden;
+}
+.m-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;opacity:0;transition:opacity .15s;}
+.m-card:hover{box-shadow:var(--shadow);transform:translateY(-2px);}
+.m-card:hover::before{opacity:1;}
+.m-card.global-card{border-color:rgba(58,122,114,.28);}
+/* method-specific colors on overview */
+.m-card{border-left:5px solid transparent;border-radius:14px;}
+.m-card.cyclic{background:linear-gradient(180deg,rgba(74,104,136,.12),rgba(255,255,255,.1)),var(--paper2);}
+.m-card.powell{background:linear-gradient(180deg,rgba(90,120,72,.12),rgba(255,255,255,.1)),var(--paper2);}
+.m-card.hooke{background:linear-gradient(180deg,rgba(184,96,64,.10),rgba(255,255,255,.1)),var(--paper2);}
+.m-card.pattern{background:linear-gradient(180deg,rgba(58,122,114,.10),rgba(255,255,255,.1)),var(--paper2);}
+.m-card.nelder{background:linear-gradient(180deg,rgba(106,88,136,.10),rgba(255,255,255,.1)),var(--paper2);}
+.m-card.direct{background:linear-gradient(180deg,rgba(176,128,48,.12),rgba(58,122,114,.06)),var(--paper2);}
+.m-card.cyclic .m-panel{background:rgba(74,104,136,.08);}
+.m-card.powell .m-panel{background:rgba(90,120,72,.08);}
+.m-card.hooke .m-panel{background:rgba(184,96,64,.08);}
+.m-card.pattern .m-panel{background:rgba(58,122,114,.08);}
+.m-card.nelder .m-panel{background:rgba(106,88,136,.08);}
+.m-card.direct .m-panel{background:rgba(176,128,48,.10);}
+.qj.cyclic{background:rgba(74,104,136,.09);border-color:rgba(74,104,136,.26);}
+.qj.powell{background:rgba(90,120,72,.09);border-color:rgba(90,120,72,.26);}
+.qj.hooke{background:rgba(184,96,64,.09);border-color:rgba(184,96,64,.26);}
+.qj.pattern{background:rgba(58,122,114,.09);border-color:rgba(58,122,114,.26);}
+.qj.nelder{background:rgba(106,88,136,.09);border-color:rgba(106,88,136,.26);}
+.qj.direct{background:rgba(176,128,48,.11);border-color:rgba(176,128,48,.28);}
+.hero-band,.quiz-q,.qj,.box,.fact,.acc,.vbox,.br-box,.m-card{border-radius:14px;}
+@media(max-width:900px){.m-card{grid-template-columns:1fr;}.m-panel{border-left:none;border-top:1px solid var(--line);} .bridge{padding-left:20px;} .chain-rail{left:10px;} .m-badge{left:-10px;}}
+
+
+.m-badge{position:absolute;left:-42px;top:20px;width:28px;height:28px;border-radius:50%;background:var(--paper3);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'IM Fell English',serif;font-size:13px;color:var(--ink3);}
+
+.m-body{padding:18px 18px 16px;}
+.m-num{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:5px;}
+.m-title{font-family:'IM Fell English',serif;font-size:20px;color:var(--ink);margin-bottom:3px;letter-spacing:normal;}
+.m-cn{font-size:12.5px;color:var(--ink3);font-style:italic;margin-bottom:9px;}
+.m-desc{font-size:14px;line-height:1.68;color:var(--ink2);}
+.m-desc em{color:var(--rust);font-style:normal;font-weight:600;}
+.m-zh{font-size:13px;color:var(--ink3);font-style:italic;margin-top:4px;}
+
+.m-panel{background:var(--paper3);border-left:1px solid var(--line);padding:15px 14px 13px;display:flex;flex-direction:column;justify-content:space-between;transition:background .2s;}
+.m-card:hover .m-panel{background:var(--ink);}
+.m-card:hover .m-panel *{color:var(--paper)!important;border-color:rgba(255,255,255,.2)!important;}
+.m-card:hover .mp-tag{background:rgba(255,255,255,.14)!important;}
+.mp-h{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:3px;}
+.mp-v{font-size:13px;color:var(--ink2);line-height:1.55;}
+.mp-sep{height:1px;background:var(--line);margin:9px 0;}
+.mp-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;}
+.mp-tag{font-size:10px;padding:2px 7px;border:1px solid var(--line);color:var(--ink3);}
+.mp-cta{font-size:12px;color:var(--ink3);font-style:italic;text-align:right;margin-top:8px;}
+
+/* bridge transitions */
+.bridge{padding:7px 0 7px 58px;display:flex;flex-direction:column;gap:4px;}
+.br-arrow{font-size:15px;color:var(--line);padding-left:8px;}
+.br-box{background:var(--paper3);border:1px solid var(--line);border-left:3px solid var(--gold);padding:7px 15px;max-width:700px;font-size:13.5px;line-height:1.58;}
+.br-lbl{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:2px;}
+.br-lim{color:var(--rust);font-style:italic;}
+.br-mot{color:var(--blue);}
+
+/* quick jump */
+.qj-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-top:32px;padding-top:22px;border-top:1px solid var(--line);}
+.qj-lbl{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:8px;grid-column:1/-1;}
+.qj{background:var(--paper2);border:1px solid var(--line);padding:10px 11px;cursor:pointer;transition:all .15s;border-radius:4px;}
+.qj:hover{background:var(--ink);color:var(--paper);}
+.qj:hover *{color:var(--paper)!important;}
+.qj.sum{background:var(--gold);border-color:var(--gold);}
+.qj.sum:hover{background:var(--ink);}
+.qj.sum *{color:#fff!important;}
+.qj.quiz-card{background:rgba(176,96,64,.12);border-color:rgba(184,96,64,.3);}
+.qj.quiz-card:hover{background:var(--rust);}
+.qj.glob{background:rgba(58,122,114,.1);border-color:rgba(58,122,114,.28);}
+.qj.glob:hover{background:var(--teal);}
+.qj-n{font-size:10px;color:var(--gold);margin-bottom:2px;font-weight:700;}
+.qj-t{font-family:'IM Fell English',serif;font-size:14px;color:var(--ink);}
+.qj-s{font-size:11px;color:var(--ink3);font-style:italic;margin-top:1px;}
+
+/* ══ DETAIL ══ */
+#detail{padding:0 0 80px;}
+.sticky-bar{position:sticky;top:0;z-index:80;background:rgba(253,246,227,.93);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:9px 0;margin-bottom:0;}
+.sb-back{font-family:inherit;font-size:13px;padding:6px 14px;background:var(--ink2);color:var(--paper);border:none;cursor:pointer;border-radius:3px;transition:background .15s;white-space:nowrap;}
+.sb-back:hover{background:var(--ink);}
+.sb-sep{flex:1;}
+.sb-btn{font-family:inherit;font-size:13px;padding:6px 12px;background:var(--paper2);border:1px solid var(--line);color:var(--ink2);cursor:pointer;border-radius:3px;transition:all .15s;white-space:nowrap;}
+.sb-btn:hover{background:var(--rust);color:var(--paper);border-color:var(--rust);}
+.sb-btn.sum{background:var(--gold);color:#fff;border-color:var(--gold);}
+.sb-btn.sum:hover{background:var(--ink);}
+.sb-btn.quiz{background:rgba(184,96,64,.18);color:var(--rust);}
+
+.d-wrap{width:min(1180px,calc(100vw - 24px));margin:0 auto;padding-top:28px;}
+@media(max-width:760px){.d-wrap{width:min(100%,calc(100vw - 14px));}}
+.d-head{margin-bottom:28px;padding-bottom:20px;border-bottom:2px solid var(--line);}
+.d-eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:8px;}
+.d-title{font-family:'IM Fell English',serif;font-size:clamp(26px,4vw,40px);line-height:1.1;margin-bottom:6px;}
+.d-sub{font-size:15px;color:var(--ink3);font-style:italic;}
+
+/* sections flow top-to-bottom */
+.d-section{margin-bottom:28px;}
+.s-head{font-family:'IM Fell English',serif;font-size:20px;font-weight:400;margin-bottom:12px;padding-bottom:5px;border-bottom:1px solid var(--line);}
+.prose{font-size:15px;line-height:1.82;color:var(--ink2);margin-bottom:12px;}
+.prose em{color:var(--rust);font-style:normal;font-weight:600;}
+.prose .zh{color:var(--ink3);font-style:italic;font-size:14px;}
+
+/* callout boxes */
+.box{padding:14px 18px;margin:14px 0;font-size:14.5px;line-height:1.78;color:var(--ink2);}
+.box .lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-bottom:5px;}
+.box.gold{background:var(--paper2);border-left:3px solid var(--gold);}
+.box.gold .lbl{color:var(--gold);}
+.box.red{background:rgba(184,96,64,.07);border:1px solid rgba(184,96,64,.22);border-left:3px solid var(--rust);}
+.box.red .lbl{color:var(--rust);}
+.box.blue{background:rgba(74,104,136,.06);border:1px solid rgba(74,104,136,.2);border-left:3px solid var(--blue);}
+.box.blue .lbl{color:var(--blue);}
+.box.teal{background:rgba(58,122,114,.07);border:1px solid rgba(58,122,114,.22);border-left:3px solid var(--teal);}
+.box.teal .lbl{color:var(--teal);}
+.box .zh{color:var(--ink3);font-style:italic;font-size:13.5px;margin-top:4px;}
+
+/* formula */
+.formula{background:var(--paper3);border:1px solid var(--line);padding:13px 18px;margin:12px 0;font-family:'Times New Roman',serif;font-size:15px;line-height:2.1;text-align:center;}
+
+/* steps */
+.steps{list-style:none;margin:12px 0;}
+.steps li{display:flex;gap:13px;margin-bottom:12px;font-size:14.5px;line-height:1.75;color:var(--ink2);}
+.steps li::before{content:counter(s);counter-increment:s;min-width:28px;height:28px;flex-shrink:0;background:var(--paper3);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:'IM Fell English',serif;font-size:13px;color:var(--ink3);}
+.steps{counter-reset:s;}
+
+/* two-col facts */
+.fact-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0;}
+.fact{background:var(--paper3);border:1px solid var(--line);padding:11px 13px;}
+.fact .fk{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:4px;}
+.fact .fv{font-size:14px;color:var(--ink2);line-height:1.58;}
+
+/* accordion */
+.acc{border:1px solid var(--line);overflow:hidden;margin:10px 0;}
+.acc-h{background:var(--paper3);padding:11px 15px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:14.5px;color:var(--ink2);user-select:none;transition:background .15s;}
+.acc-h:hover{background:var(--paper4);}
+.acc-ico{color:var(--ink3);transition:transform .2s;}
+.acc-ico.open{transform:rotate(45deg);}
+.acc-b{display:none;padding:13px 15px;background:var(--paper2);border-top:1px solid var(--line);font-size:14px;line-height:1.78;color:var(--ink2);}
+.acc-b.show{display:block;}
+
+/* op cards (NM) */
+.op-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0;}
+.op-c{background:var(--paper3);border:1px solid var(--line);padding:12px 13px;cursor:pointer;transition:all .15s;border-left:3px solid var(--line);}
+.op-c:hover,.op-c.on{background:var(--paper);box-shadow:0 2px 8px rgba(90,60,20,.1);}
+.op-c.on.ref{border-left-color:var(--blue);}
+.op-c.on.exp{border-left-color:var(--olive);}
+.op-c.on.con{border-left-color:var(--gold);}
+.op-c.on.shr{border-left-color:var(--rust);}
+.op-h{font-family:'IM Fell English',serif;font-size:16px;margin-bottom:3px;}
+.op-f{font-size:13px;color:var(--ink3);font-style:italic;margin-bottom:5px;}
+.op-d{font-size:13px;color:var(--ink2);line-height:1.6;}
+
+/* viz */
+.vbox{background:var(--paper2);border:1px solid var(--line);margin:14px 0;overflow:hidden;}
+.vtb{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:9px 13px;border-bottom:1px solid var(--line);background:var(--paper3);}
+.vtb-lbl{font-size:12px;color:var(--ink3);font-style:italic;}
+.vbtn{font-family:inherit;font-size:13px;padding:4px 12px;cursor:pointer;background:var(--paper);border:1px solid var(--line);color:var(--ink2);transition:all .15s;border-radius:3px;}
+.vbtn:hover{background:var(--ink);color:var(--paper);}
+.vbtn.act{background:var(--rust);color:#fff;border-color:var(--rust);}
+.vbtn.go{background:var(--blue);color:#fff;border-color:var(--blue);}
+.vbtn.go:hover,.vbtn.act:hover{background:var(--ink);}
+.vleg{display:flex;flex-wrap:wrap;gap:10px;padding:7px 13px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.15);}
+.vl{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink2);}
+.vls{width:18px;height:9px;}
+.vld{width:9px;height:9px;border-radius:50%;}
+.vcanv{position:relative;width:100%;}
+canvas{display:block;width:100%;}
+.vnote{padding:10px 14px;border-top:1px solid var(--line);font-size:13px;line-height:1.65;color:var(--ink2);}
+.vnote .zh{color:var(--ink3);font-style:italic;font-size:12px;margin-top:2px;}
+
+/* compare table */
+.ctbl{width:100%;border-collapse:collapse;font-size:14px;margin:12px 0;}
+.ctbl th{font-family:'IM Fell English',serif;font-weight:400;font-size:15px;padding:8px 11px;text-align:left;border-bottom:2px solid var(--line);background:var(--paper3);}
+.ctbl td{padding:7px 11px;border-bottom:1px solid var(--softline);vertical-align:top;line-height:1.55;}
+.ctbl tr:nth-child(even) td{background:var(--paper2);}
+.yes{color:var(--olive);font-weight:600;}
+.no{color:var(--rust);}
+
+.sum-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:12px;margin:14px 0;}
+.sum-card{background:var(--paper2);border:1px solid var(--line);padding:14px 16px;}
+.sum-card h4{font-family:'IM Fell English',serif;font-size:18px;font-weight:400;margin-bottom:7px;}
+.sum-list{margin:6px 0 0 18px;color:var(--ink2);font-size:14.5px;line-height:1.75;}
+.sum-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0;}
+.sum-mini{background:var(--paper3);border:1px solid var(--line);padding:12px 13px;}
+.sum-mini .k{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:5px;}
+.sum-mini .v{font-size:14px;line-height:1.64;color:var(--ink2);}
+.chain-summary{display:grid;gap:10px;margin:16px 0;}
+.chain-summary .item{background:linear-gradient(180deg,rgba(255,255,255,.2),transparent),var(--paper2);border:1px solid var(--line);padding:12px 14px;border-left:5px solid var(--line);}
+.chain-summary .item h5{font-family:'IM Fell English',serif;font-size:17px;font-weight:400;margin-bottom:3px;}
+.chain-summary .item p{font-size:14.5px;line-height:1.72;color:var(--ink2);}
+.chain-summary .item.cyclic{border-left-color:var(--blue);} .chain-summary .item.powell{border-left-color:var(--olive);} .chain-summary .item.hooke{border-left-color:var(--rust);} .chain-summary .item.pattern{border-left-color:var(--teal);} .chain-summary .item.nelder{border-left-color:var(--purple);} .chain-summary .item.direct{border-left-color:var(--gold);}
+@media(max-width:900px){.sum-grid,.sum-strip{grid-template-columns:1fr;}}
+
+/* bottom nav */
+.bnav{display:flex;gap:9px;justify-content:space-between;margin-top:44px;padding-top:22px;border-top:1px solid var(--line);flex-wrap:wrap;}
+.bnav-btn{font-family:inherit;font-size:14px;padding:9px 17px;border:1px solid var(--line);background:var(--paper2);color:var(--ink2);cursor:pointer;transition:all .15s;flex:1;max-width:260px;text-align:center;}
+.bnav-btn:hover{background:var(--rust);color:#fff;border-color:var(--rust);}
+.bnav-btn.sum{background:var(--gold);color:#fff;border-color:var(--gold);}
+.bnav-btn.sum:hover{background:var(--ink);}
+
+/* ══ SUMMARY ══ */
+#summary{padding:0 0 80px;}
+/* ══ QUIZ ══ */
+#quiz{padding:0 0 80px;}
+.quiz-q{border:1px solid var(--line);background:var(--paper2);padding:16px;margin-bottom:14px;}
+.quiz-q h4{font-family:'IM Fell English',serif;font-size:19px;font-weight:400;margin-bottom:8px;}
+.q-opt{display:flex;gap:9px;align-items:flex-start;padding:5px 0;font-size:15px;}
+.q-tools{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px;}
+.q-tr{display:none;margin:6px 0 8px;padding:9px 11px;border-left:3px solid var(--gold);background:rgba(255,255,255,.4);font-size:13.5px;line-height:1.65;color:var(--ink2);}
+.q-tr.show{display:block;}
+.q-review{margin-top:9px;padding:9px 11px;background:rgba(255,255,255,.45);border:1px solid var(--line);}
+.q-review.ok{border-left:4px solid var(--olive);}
+.q-review.bad{border-left:4px solid var(--rust);}
+.score-sticky{position:sticky;top:60px;}
+.score-val{font-size:48px;font-family:'IM Fell English',serif;margin:8px 0 4px;}
+.tiny-btn{border:1px solid var(--line);background:var(--paper2);padding:5px 9px;border-radius:3px;cursor:pointer;font-size:13px;font-family:inherit;}
+.quiz-layout{display:grid;grid-template-columns:1fr 260px;gap:18px;align-items:start;}
+@media(max-width:720px){.quiz-layout{grid-template-columns:1fr;}.fact-row,.op-grid{grid-template-columns:1fr;}}
+body[data-method="cyclic"] .d-head, body[data-method="cyclic"] .s-head{border-color:rgba(74,104,136,.25);}
+body[data-method="powell"] .d-head, body[data-method="powell"] .s-head{border-color:rgba(90,120,72,.25);}
+body[data-method="hooke"] .d-head, body[data-method="hooke"] .s-head{border-color:rgba(184,96,64,.25);}
+body[data-method="pattern"] .d-head, body[data-method="pattern"] .s-head{border-color:rgba(58,122,114,.25);}
+body[data-method="nelder"] .d-head, body[data-method="nelder"] .s-head{border-color:rgba(106,88,136,.25);}
+body[data-method="direct"] .d-head, body[data-method="direct"] .s-head{border-color:rgba(176,128,48,.25);}
+
+
+@media (max-width: 900px){
+  .wrap,.topbar-inner,.d-wrap{width:min(100vw - 28px, 100%);} 
+}
+@media (min-width: 1200px){
+  .wrap,.topbar-inner{width:min(760px,50vw);} 
+  .d-wrap{width:min(700px,46vw);} 
+}
+
+</style>
+</head>
+<body>
+<div class="progress" id="pbar"></div>
+
+<div class="topbar">
+<div class="topbar-inner">
+  <div class="brand">
+    <span class="brand-badge">Ch 7</span>
+    <span class="brand-title">Direct Methods · 直接方法</span>
+  </div>
+  <div class="topnav">
+    <button class="tn" onclick="showView('home')">Overview 总览</button>
+    <button class="tn" onclick="showView('summary')">Summary 总结</button>
+    <button class="tn gold" onclick="showView('quiz')">Quiz 自测</button>
+  </div>
+</div>
+</div>
+
+<!-- ════════════ HOME ════════════ -->
+<div id="home" class="view active">
+<div class="wrap" style="padding:36px 0 72px;">
+
+<div class="hero-band">
+  <div class="hero-eyebrow">Algorithms for Optimization · Chapter 7 · 第七章</div>
+  <div class="hero-h1">Derivative-Free Optimisation<br><span style="font-size:.6em;color:var(--ink3);">无导数优化方法 · Six Methods, One Logic</span></div>
+  <div class="hero-lead">
+    当目标函数是<strong>黑盒</strong>（由仿真、实验或不可微代码定义），只能输入点、得到函数值时，所有基于梯度的方法完全失效。本章六种方法从最朴素的逐坐标搜索出发，每种方法回应前一种的局限，最终到达唯一的全局方法 DIRECT。
+    <br/>Six methods, each one a direct response to the limitation of its predecessor — from axis-by-axis search to global domain partitioning.
+  </div>
+  <div class="hero-pills">
+    <span class="pill">Black-box objective 黑盒目标</span>
+    <span class="pill">Function evaluations only 只看函数值</span>
+    <span class="pill">Local → Global 局部到全局</span>
+    <span class="pill">Each method answers the previous one's limitation</span>
+  </div>
+</div>
+
+<div class="sec-label" style="margin-top:32px;">Method Chain · 方法演进链</div>
+
+<div class="chain">
+<div class="chain-rail"></div>
+
+<!-- 7.1 -->
+<div class="method-row">
+<span class="m-badge">1</span>
+<div class="m-card cyclic" style="--c:var(--blue);" onclick="showDetail('cyclic')">
+  <div class="m-body">
+    <div class="m-num">§ 7.1 · Local · 局部</div>
+    <div class="m-title">Cyclic Coordinate Search</div>
+    <div class="m-cn">循环坐标搜索 · Taxicab search · Coordinate descent</div>
+    <div class="m-desc">The simplest starting point: optimise one coordinate at a time, cycling through all n axes. Think of it as a hiker who can only walk east-west or north-south — never diagonally.</div>
+    <div class="m-zh">最简单的起点：每次只动一个坐标，轮流遍历。就像只能横向或纵向移动的登山者——永远不走斜线。</div>
+  </div>
+  <div class="m-panel">
+    <div>
+      <div class="mp-h">Per step</div><div class="mp-v">1 line search along one axis<br>沿一个坐标轴做线搜索</div>
+      <div class="mp-sep"></div>
+      <div class="mp-h">Watch out</div><div class="mp-v">Diagonal valleys → gets stuck permanently<br>对角谷问题，会永久卡死</div>
+    </div>
+    <div><div class="mp-tags"><span class="mp-tag">local</span><span class="mp-tag">axis-aligned</span></div><div class="mp-cta">Explore →</div></div>
+  </div>
+</div>
+</div>
+
+<div class="bridge">
+  <div class="br-arrow">↓</div>
+  <div class="br-box">
+    <div class="br-lbl">Limitation → Motivation</div>
+    <span class="br-lim">Fixed coordinate axes can't descend diagonal valleys.</span>
+    <span class="br-mot"> → Let search directions evolve with each cycle. 让方向自适应函数几何结构。</span>
+  </div>
+</div>
+
+<!-- 7.2 -->
+<div class="method-row">
+<span class="m-badge">2</span>
+<div class="m-card powell" onclick="showDetail('powell')">
+  <div class="m-body">
+    <div class="m-num">§ 7.2 · Local · 局部</div>
+    <div class="m-title">Powell's Method</div>
+    <div class="m-cn">Powell 方法 · Conjugate direction method · 共轭方向</div>
+    <div class="m-desc">Keep doing line searches, but <em>replace the oldest direction</em> with the overall direction of progress each cycle. Directions gradually align with the valley geometry. Exact on quadratics in n iterations.</div>
+    <div class="m-zh">保留线搜索，但每轮用实际进展方向替换最旧方向。方向组逐渐对齐函数山谷。对二次函数 n 轮精确求解。</div>
+  </div>
+  <div class="m-panel">
+    <div>
+      <div class="mp-h">Quadratic guarantee</div><div class="mp-v">Exact in n full cycles<br>n 轮精确解二次函数</div>
+      <div class="mp-sep"></div>
+      <div class="mp-h">Watch out</div><div class="mp-v">Directions may become linearly dependent → reset every n iters<br>方向退化，需定期重置</div>
+    </div>
+    <div><div class="mp-tags"><span class="mp-tag">local</span><span class="mp-tag">conjugate dirs</span></div><div class="mp-cta">Explore →</div></div>
+  </div>
+</div>
+</div>
+
+<div class="bridge">
+  <div class="br-arrow">↓</div>
+  <div class="br-box">
+    <div class="br-lbl">Limitation → Motivation</div>
+    <span class="br-lim">Full line searches are expensive; n(n+1) searches per cycle.</span>
+    <span class="br-mot"> → Just take cheap ±α probing steps instead. 用小步探测代替完整线搜索。</span>
+  </div>
+</div>
+
+<!-- 7.3 -->
+<div class="method-row">
+<span class="m-badge">3</span>
+<div class="m-card hooke" onclick="showDetail('hooke')">
+  <div class="m-body">
+    <div class="m-num">§ 7.3 · Local · 局部</div>
+    <div class="m-title">Hooke-Jeeves Method</div>
+    <div class="m-cn">Hooke-Jeeves 方法 · Direct search · 坐标探步</div>
+    <div class="m-desc">Replace expensive line searches with cheap probing: test <em>±α steps in every coordinate direction</em>, accept the best improvement, shrink α when stuck. 2n evaluations per step.</div>
+    <div class="m-zh">用廉价探测替代完整线搜索：在每个坐标方向走 ±α 小步，接受最优改善，卡住时缩小步长。每步 2n 次求值。</div>
+  </div>
+  <div class="m-panel">
+    <div>
+      <div class="mp-h">Cost per step</div><div class="mp-v">2n function evaluations<br>每步 2n 次函数求值</div>
+      <div class="mp-sep"></div>
+      <div class="mp-h">Watch out</div><div class="mp-v">2n is wasteful in high dimensions<br>高维时求值代价大</div>
+    </div>
+    <div><div class="mp-tags"><span class="mp-tag">local</span><span class="mp-tag">2n evals/step</span></div><div class="mp-cta">Explore →</div></div>
+  </div>
+</div>
+</div>
+
+<div class="bridge">
+  <div class="br-arrow">↓</div>
+  <div class="br-box">
+    <div class="br-lbl">Limitation → Motivation</div>
+    <span class="br-lim">2n evaluations per step is more than necessary.</span>
+    <span class="br-mot"> → Any positive spanning set needs only n+1 directions and still guarantees descent. 正生成集只需 n+1 个方向。</span>
+  </div>
+</div>
+
+<!-- 7.4 -->
+<div class="method-row">
+<span class="m-badge">4</span>
+<div class="m-card pattern" onclick="showDetail('pattern')">
+  <div class="m-body">
+    <div class="m-num">§ 7.4 · Local · 局部</div>
+    <div class="m-title">Generalized Pattern Search</div>
+    <div class="m-cn">广义模式搜索 · Mesh adaptive · 正生成集</div>
+    <div class="m-desc">Use any <em>positive spanning set</em> of directions (minimum n+1 instead of 2n). Adds opportunistic acceptance (grab first improvement) and dynamic ordering (try winning directions first).</div>
+    <div class="m-zh">使用任意正生成集（最少 n+1 个方向）。加入机会性接受和动态排序两个增强机制。</div>
+  </div>
+  <div class="m-panel">
+    <div>
+      <div class="mp-h">Minimum directions</div><div class="mp-v">n+1 vs 2n in Hooke-Jeeves<br>最少 n+1 个方向</div>
+      <div class="mp-sep"></div>
+      <div class="mp-h">Key requirement</div><div class="mp-v">Positive spanning set<br>正生成集</div>
+    </div>
+    <div><div class="mp-tags"><span class="mp-tag">local</span><span class="mp-tag">≥n+1 dirs</span></div><div class="mp-cta">Explore →</div></div>
+  </div>
+</div>
+</div>
+
+<div class="bridge">
+  <div class="br-arrow">↓</div>
+  <div class="br-box">
+    <div class="br-lbl">Paradigm shift · 范式转变</div>
+    <span class="br-lim">All above search from a single point — always at risk of local minima.</span>
+    <span class="br-mot"> → Maintain a whole geometric shape (n+1 points = simplex) that deforms like an amoeba. 维护 n+1 个点构成的几何体，像变形虫一样爬向极小值。</span>
+  </div>
+</div>
+
+<!-- 7.5 -->
+<div class="method-row">
+<span class="m-badge">5</span>
+<div class="m-card nelder" onclick="showDetail('nelder')">
+  <div class="m-body">
+    <div class="m-num">§ 7.5 · Local · 局部</div>
+    <div class="m-title">Nelder-Mead Simplex</div>
+    <div class="m-cn">Nelder-Mead 单纯形法 · Amoeba method</div>
+    <div class="m-desc">Maintain a simplex of n+1 points (triangle in 2D). Four operations — <em>reflect, expand, contract, shrink</em> — deform the shape toward the minimum. Converges when std of function values &lt; ε.</div>
+    <div class="m-zh">维护 n+1 个点的单纯形（2D 中是三角形）。通过反射、扩展、收缩、缩减四种操作变形。收敛判据：顶点函数值标准差 &lt; ε。</div>
+  </div>
+  <div class="m-panel">
+    <div>
+      <div class="mp-h">4 operations</div><div class="mp-v">Reflect · Expand · Contract · Shrink</div>
+      <div class="mp-sep"></div>
+      <div class="mp-h">Convergence</div><div class="mp-v">std(f-values at vertices) &lt; ε</div>
+    </div>
+    <div><div class="mp-tags"><span class="mp-tag">local</span><span class="mp-tag">n+1 vertices</span></div><div class="mp-cta">Explore →</div></div>
+  </div>
+</div>
+</div>
+
+<div class="bridge">
+  <div class="br-arrow">↓</div>
+  <div class="br-box">
+    <div class="br-lbl">Shift to global · 转向全局</div>
+    <span class="br-lim">All 5 methods are local — no guarantee of finding the global minimum.</span>
+    <span class="br-mot"> → Divide the entire domain into rectangles; use Lipschitz theory to systematically rule out regions. 将整个域划分为矩形，用 Lipschitz 理论系统性地排除不可能含全局最小值的区域。</span>
+  </div>
+</div>
+
+<!-- 7.6 -->
+<div class="method-row">
+<span class="m-badge" style="background:rgba(58,122,114,.15);border-color:rgba(58,122,114,.4);color:var(--teal);">6</span>
+<div class="m-card global-card direct" onclick="showDetail('direct')">
+  <div class="m-body">
+    <div class="m-num" style="color:var(--teal);">§ 7.6 · Global · 全局</div>
+    <div class="m-title">DIRECT — Divided Rectangles</div>
+    <div class="m-cn">分矩形算法 · DIvided RECTangles · Lipschitzian global optimisation</div>
+    <div class="m-desc">Trisect the search space into rectangles, sampling each centre. A <em>convex hull rule</em> selects "potentially optimal" intervals — covering all possible Lipschitz constants simultaneously, without specifying any.</div>
+    <div class="m-zh">将搜索空间三等分为矩形，在每个中心采样。凸壳规则选取潜在最优区间——同时覆盖所有可能的 Lipschitz 常数，无需指定任何一个。</div>
+  </div>
+  <div class="m-panel" style="background:rgba(58,122,114,.1);">
+    <div>
+      <div class="mp-h" style="color:var(--teal);">Global guarantee</div><div class="mp-v">No ℓ needed · 无需 Lipschitz 常数</div>
+      <div class="mp-sep"></div>
+      <div class="mp-h" style="color:var(--teal);">Selection rule</div><div class="mp-v">Convex hull in (r, f(c)) space · 凸壳规则覆盖所有 ℓ</div>
+    </div>
+    <div><div class="mp-tags"><span class="mp-tag" style="color:var(--teal);border-color:rgba(58,122,114,.4);">global</span><span class="mp-tag">no ℓ needed</span></div><div class="mp-cta">Explore →</div></div>
+  </div>
+</div>
+</div>
+</div><!-- /chain -->
+
+<!-- Quick jump -->
+<div class="qj-row">
+  <div class="qj-lbl">Quick Jump · 快速跳转</div>
+  <div class="qj sum" onclick="showView('summary')"><div class="qj-n">★</div><div class="qj-t">Summary</div><div class="qj-s">全章总结</div></div>
+  <div class="qj cyclic" onclick="showDetail('cyclic')"><div class="qj-n">§7.1</div><div class="qj-t">Cyclic</div><div class="qj-s">循环坐标</div></div>
+  <div class="qj powell" onclick="showDetail('powell')"><div class="qj-n">§7.2</div><div class="qj-t">Powell</div><div class="qj-s">共轭方向</div></div>
+  <div class="qj hooke" onclick="showDetail('hooke')"><div class="qj-n">§7.3</div><div class="qj-t">Hooke-Jeeves</div><div class="qj-s">坐标探步</div></div>
+  <div class="qj pattern" onclick="showDetail('pattern')"><div class="qj-n">§7.4</div><div class="qj-t">Pattern</div><div class="qj-s">广义模式</div></div>
+  <div class="qj nelder" onclick="showDetail('nelder')"><div class="qj-n">§7.5</div><div class="qj-t">Nelder-Mead</div><div class="qj-s">单纯形法</div></div>
+  <div class="qj glob direct" onclick="showDetail('direct')"><div class="qj-n" style="color:var(--teal);">§7.6</div><div class="qj-t">DIRECT</div><div class="qj-s">分矩形</div></div>
+  <div class="qj quiz-card" onclick="showView('quiz')"><div class="qj-n" style="color:var(--rust);">✎</div><div class="qj-t">Quiz</div><div class="qj-s">随机自测</div></div>
+</div>
+</div>
+</div><!-- /home -->
+
+<!-- ════════════ DETAIL ════════════ -->
+<div id="detail" class="view">
+  <div class="sticky-bar">
+    <div class="wrap" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;width:100%;padding:0;">
+      <button class="sb-back" onclick="showView('home')">← Overview 总览</button>
+      <div class="sb-sep"></div>
+      <div id="sb-extra"></div>
+    </div>
+  </div>
+  <div class="d-wrap" id="d-body"></div>
+</div>
+
+<!-- ════════════ SUMMARY ════════════ -->
+<div id="summary" class="view">
+<div class="sticky-bar">
+  <div class="wrap" style="display:flex;align-items:center;gap:7px;width:100%;padding:0;">
+    <button class="sb-back" onclick="showView('home')">← Overview 总览</button>
+    <div class="sb-sep"></div>
+    <button class="sb-btn quiz" onclick="showView('quiz')">Quiz 自测 →</button>
+  </div>
+</div>
+<div class="d-wrap">
+  <div class="d-head">
+    <div class="d-eyebrow">★ Chapter Summary · 全章总结</div>
+    <div class="d-title">Direct Methods — The Complete Picture</div>
+    <div class="d-sub">把第七章六种方法放进同一条逻辑链里：为什么出现、解决什么、又留下什么</div>
+  </div>
+
+  <div class="box gold"><div class="lbl">One-Line Backbone · 一条主线</div>
+  Fixed coordinate directions → adaptive directions → cheap local probes → positive spanning sets → simplex deformation → global domain partitioning.
+  <div class="zh">固定坐标方向 → 自适应方向 → 廉价局部探测 → 正生成集 → 单纯形变形 → 全局区域划分。整章不是孤立算法堆砌，而是一条连续的“回应局限”的演化链。</div></div>
+
+  <div class="sum-strip">
+    <div class="sum-mini"><div class="k">Question 1</div><div class="v">When gradients are unavailable, what geometric information can still guide search?<br><span class="zh">没有梯度时，还能利用哪些几何直觉来找下降方向？</span></div></div>
+    <div class="sum-mini"><div class="k">Question 2</div><div class="v">How do we reduce function evaluations without losing the ability to descend?<br><span class="zh">怎样在减少函数求值的同时仍保留下降能力？</span></div></div>
+    <div class="sum-mini"><div class="k">Question 3</div><div class="v">How do we move from local search to a global-search mindset?<br><span class="zh">如何从局部搜索过渡到全局搜索？</span></div></div>
+  </div>
+
+  <div class="d-section">
+    <div class="s-head">Method-by-Method Logic · 每种方法在整章中的位置</div>
+    <div class="chain-summary">
+      <div class="item cyclic"><h5>1. Cyclic Coordinate Search · 循环坐标搜索</h5><p><b>Core idea:</b> optimize one coordinate at a time. <b>Why it matters:</b> it is the cleanest possible derivative-free baseline. <b>Main weakness:</b> axis directions are fixed, so diagonal valleys can trap it badly.<br><span class="zh">核心思想是逐坐标优化。它的重要性在于提供了最原始的无导数起点；但方向固定在坐标轴上，所以一旦谷底斜着走，它就会很笨。</span></p></div>
+      <div class="item powell"><h5>2. Powell’s Method · Powell 方法</h5><p><b>Core idea:</b> still use line searches, but let directions evolve from actual progress. <b>Improvement over cyclic:</b> directions can gradually align with the valley. <b>New issue:</b> full line searches remain expensive, especially in high dimensions.<br><span class="zh">它保留线搜索的精度，但方向不再死板，而是逐步学习函数地形；问题是线搜索本身仍然贵。</span></p></div>
+      <div class="item hooke"><h5>3. Hooke–Jeeves · Hooke-Jeeves 方法</h5><p><b>Core idea:</b> replace full line searches with cheap ±α probes. <b>Improvement over Powell:</b> much cheaper per move. <b>New issue:</b> checking all 2n coordinate directions can itself become wasteful.<br><span class="zh">它用“试一小步看看有没有变好”代替完整线搜索，更像试探式走路；但在高维时，2n 个方向依然不少。</span></p></div>
+      <div class="item pattern"><h5>4. Generalized Pattern Search · 广义模式搜索</h5><p><b>Core idea:</b> use any positive spanning set, not necessarily all ± coordinate directions. <b>Improvement over Hooke–Jeeves:</b> only enough directions to guarantee a descent opportunity. <b>New issue:</b> it is still a single-point local method.<br><span class="zh">它把“哪些方向足够用”这件事抽象成正生成集，因此比单纯坐标探测更一般也更省；但本质上还是局部搜索。</span></p></div>
+      <div class="item nelder"><h5>5. Nelder–Mead Simplex · Nelder–Mead 单纯形法</h5><p><b>Core idea:</b> carry a whole simplex of n+1 points and deform its shape. <b>Improvement over point-based methods:</b> geometry now comes from a moving body, not one point plus test directions. <b>New issue:</b> still local, and theoretical guarantees are weaker than the neat positive-spanning framework.<br><span class="zh">它不再只盯住一个点，而是让一个会变形的几何体往低处滑，直观性很强；但它仍然可能困在局部极小值。</span></p></div>
+      <div class="item direct"><h5>6. DIRECT · 划分矩形法</h5><p><b>Core idea:</b> partition the whole domain and select potentially optimal rectangles using lower-bound logic. <b>Why it is different:</b> this is the chapter’s global method. <b>Tradeoff:</b> broader exploration, slower fine local polishing.<br><span class="zh">DIRECT 不再问“当前点附近怎么走”，而是问“整个定义域里哪些区域最值得继续分裂”。这是本章从局部思维转向全局思维的关键一步。</span></p></div>
+    </div>
+  </div>
+
+  <div class="d-section">
+    <div class="s-head">Full Comparison · 完整对比</div>
+    <table class="ctbl">
+      <thead><tr><th>Method</th><th>Main move</th><th>Typical cost</th><th>Local / Global</th><th>Best for</th></tr></thead>
+      <tbody>
+        <tr><td><b>Cyclic</b> 循环坐标</td><td>Axis-by-axis line search</td><td>1 line search each coordinate move</td><td>Local</td><td>Teaching intuition, very simple structure</td></tr>
+        <tr><td><b>Powell</b> Powell</td><td>Adaptive direction line searches</td><td>Many line searches per cycle</td><td>Local</td><td>Smooth valley-like problems without derivatives</td></tr>
+        <tr><td><b>Hooke–Jeeves</b></td><td>±α local probes</td><td>About 2n evaluations per exploratory step</td><td>Local</td><td>Cheap function evaluations, simple implementation</td></tr>
+        <tr><td><b>Pattern Search</b> 模式搜索</td><td>Positive spanning directions</td><td>At least n+1 directions</td><td>Local</td><td>More principled direct search design</td></tr>
+        <tr><td><b>Nelder–Mead</b></td><td>Simplex deformation</td><td>n+1 vertices updated geometrically</td><td>Local</td><td>Low-dimensional black-box tuning</td></tr>
+        <tr><td><b>DIRECT</b></td><td>Rectangle partition + lower bound</td><td>Global partition budget grows over time</td><td>Global</td><td>Unknown landscape, many local minima</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sum-grid">
+    <div class="sum-card">
+      <h4>How to Choose · 实际怎么选</h4>
+      <ul class="sum-list">
+        <li>If the dimension is low and you want a very intuitive method, start from <b>Nelder–Mead</b> or <b>Powell</b>.</li>
+        <li>If line searches are too expensive, think <b>Hooke–Jeeves</b> or <b>Pattern Search</b>.</li>
+        <li>If the geometry is strongly axis-misaligned, avoid relying on <b>Cyclic Coordinate Search</b> alone.</li>
+        <li>If you worry the function has many local minima and the search box matters, <b>DIRECT</b> is the natural chapter-7 answer.</li>
+        <li>If you need a method that looks elegant in theory, Pattern Search gives the cleanest bridge from coordinate probing to abstract direction sets.</li>
+      </ul>
+      <div class="zh" style="margin-top:8px;">简单说：低维调参看 Nelder–Mead；想保留线搜索精度看 Powell；想省函数值看 Hooke–Jeeves / Pattern Search；怕掉进局部极小值就看 DIRECT。</div>
+    </div>
+    <div class="sum-card">
+      <h4>Common Confusions · 常见易混点</h4>
+      <ul class="sum-list">
+        <li><b>Powell</b> 不是“换坐标轴”，而是“更新一组搜索方向”。</li>
+        <li><b>Hooke–Jeeves</b> 与 <b>Pattern Search</b> 都是探测步思想，但后者强调正生成集这一更一般框架。</li>
+        <li><b>Nelder–Mead simplex</b> 不是线性规划里的 simplex algorithm，它们完全不是一回事。</li>
+        <li><b>DIRECT</b> 也不是随机全局搜索；它是确定性的区域划分方法。</li>
+        <li>前五个方法本质上都偏局部；本章真正代表“全局搜索视角”的是 DIRECT。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="d-section">
+    <div class="s-head">What Examiners Usually Want · 复习时最该会什么</div>
+    <div class="fact-row">
+      <div class="fact"><div class="fk">Understand the motivation</div><div class="fv">You should be able to say not only what each method does, but exactly <b>which weakness of the previous method</b> it is trying to fix.<br><span class="zh">复习时最值钱的不是背步骤，而是会说“它为什么会出现”。</span></div></div>
+      <div class="fact"><div class="fk">Distinguish local and global</div><div class="fv">Know clearly where the chapter changes mindset: before DIRECT, search is centered around improving from current point(s); DIRECT evaluates entire regions.<br><span class="zh">一定分清局部搜索和全局区域划分的分水岭。</span></div></div>
+    </div>
+    <div class="fact-row">
+      <div class="fact"><div class="fk">Compare evaluation budgets</div><div class="fv">A core practical theme is how many function evaluations are needed: line search costs, 2n probes, n+1 directions, simplex updates, domain partition growth.</div></div>
+      <div class="fact"><div class="fk">Keep the geometry in mind</div><div class="fv">Axes, adaptive directions, positive spanning sets, simplexes, and rectangles are the geometric language of this chapter.<br><span class="zh">这一章本质上是在学不同的“几何搜索载体”。</span></div></div>
+    </div>
+  </div>
+
+  <div class="bnav">
+    <button class="bnav-btn" onclick="showDetail('cyclic')">← Revisit from Method 1</button>
+    <button class="bnav-btn sum" onclick="showView('quiz')">Go to Quiz 自测 →</button>
+  </div>
+</div>
+</div>
+
+<!-- ════════════ QUIZ ════════════ -->
+<div id="quiz" class="view">
+<div class="sticky-bar">
+  <div class="wrap" style="display:flex;align-items:center;gap:7px;width:100%;padding:0;">
+    <button class="sb-back" onclick="showView('home')">← Overview 总览</button>
+    <div class="sb-sep"></div>
+    <button class="sb-btn" onclick="newQuiz()">New Version 新题版</button>
+    <button class="sb-btn sum" onclick="gradeQuiz()">Submit & Score 提交评分</button>
+  </div>
+</div>
+<div class="d-wrap">
+  <div class="d-head">
+    <div class="d-eyebrow">Self-Test · 自测系统</div>
+    <div class="d-title">Quiz Bank with Scoring</div>
+    <div class="d-sub">7题随机抽取 · 可查翻译 · 提交后自动评分并显示解析</div>
+  </div>
+  <div class="quiz-layout">
+    <div id="quiz-mount"></div>
+    <div class="score-sticky">
+      <div class="box gold"><div class="lbl">Your Score · 得分</div>
+        <div class="score-val" id="score-val">—</div>
+        <div style="font-size:14px;color:var(--ink3)" id="score-txt">答题后点击 Submit & Score。</div>
+        <div style="margin-top:12px" id="score-exp"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+function showView(id){
+  if(id==='home'||id==='summary'||id==='quiz') document.body.removeAttribute('data-method');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  updateProgress();
+}
+const ORDER=['cyclic','powell','hooke','pattern','nelder','direct'];
+const TITLES={cyclic:"Cyclic",powell:"Powell",hooke:"Hooke-Jeeves",pattern:"Pattern Search",nelder:"Nelder-Mead",direct:"DIRECT"};
+function showDetail(id){
+  document.body.setAttribute('data-method',id);
+  curMethod=id;
+  buildDetail(id);
+  showView('detail');
+}
+function updateProgress(){
+  const v=document.querySelector('.view.active');
+  const total=Math.max(v.scrollHeight-window.innerHeight,1);
+  document.getElementById('pbar').style.width=Math.min(window.scrollY/total*100,100)+'%';
+}
+window.addEventListener('scroll',updateProgress);
+window.addEventListener('resize',updateProgress);
+
+// ═══════════════════════════════════════
+// DETAIL BUILDER
+// ═══════════════════════════════════════
+let curMethod=null;
+function buildDetail(id){
+  const p=ORDER[ORDER.indexOf(id)-1]||null;
+  const n=ORDER[ORDER.indexOf(id)+1]||null;
+  // sticky extra buttons
+  let ex='';
+  if(p)ex+=`<button class="sb-btn" onclick="showDetail('${p}')">← ${TITLES[p]}</button>`;
+  ex+=`<button class="sb-btn sum" onclick="showView('summary')">★ Summary</button>`;
+  if(n)ex+=`<button class="sb-btn" onclick="showDetail('${n}')">${TITLES[n]} →</button>`;
+  document.getElementById('sb-extra').innerHTML=ex;
+  const bnav=`<div class="bnav">
+    <div class="bnav-btn" onclick="${p?`showDetail('${p}')`:'showView(\'home\')'}">${p?'← '+TITLES[p]:'← Overview'}</div>
+    <div class="bnav-btn sum" onclick="showView('summary')">★ Summary</div>
+    <div class="bnav-btn" onclick="${n?`showDetail('${n}')`:'showView(\'summary\')'}">${n?TITLES[n]+' →':'★ Summary →'}</div>
+  </div>`;
+  document.getElementById('d-body').innerHTML=PAGES[id]()+bnav;
+  setTimeout(()=>INITS[id]&&INITS[id](),80);
+}
+function toggleAcc(id){
+  const b=document.getElementById('ab-'+id),i=document.getElementById('ai-'+id);
+  if(!b)return;
+  b.classList.toggle('show');i.classList.toggle('open');
+}
+function nmHL(op){
+  ['ref','exp','con','shr'].forEach(o=>{
+    const c=document.querySelector('.op-c.'+o);
+    if(c)c.classList.toggle('on',o===op);
+  });
+}
+
+// ═══════════════════════════════════════
+// CANVAS UTILS
+// ═══════════════════════════════════════
+const C={ink:'#2a1e0f',ink3:'#7a6040',acc:'#b86040',rust:'#b86040',teal:'#3a7a72',navy:'#4a6888',olive:'#5a7848',gold:'#b08030',blue:'#4a6888',p2:'#f5e9c8',p3:'#ecd9a8'};
+function rc(cv,h){
+  const W=cv.parentElement.clientWidth,dpr=window.devicePixelRatio||1;
+  cv.width=W*dpr;cv.height=h*dpr;cv.style.width=W+'px';cv.style.height=h+'px';
+  const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);return[ctx,W,h];
+}
+
+// ═══════════════════════════════════════
+// PAGES
+// ═══════════════════════════════════════
+const PAGES={
+
+cyclic:()=>`
+<div class="d-head"><div class="d-eyebrow">§ 7.1 · Local · 局部</div>
+<div class="d-title">Cyclic Coordinate Search</div>
+<div class="d-sub">循环坐标搜索 · Taxicab search · Coordinate descent</div></div>
+
+<div class="box blue"><div class="lbl">Intuition · 直觉</div>
+Imagine a hiker who can only walk east-west or north-south — never diagonally. At each step they find the best point along one axis, then switch. This is cyclic coordinate search. Simple, but the restriction is real.<br>
+<div class="zh">想象一个只能东西向或南北向行走的登山者——永远不走斜线。每步沿一个坐标轴找最优点，然后换轴。简单，但限制真实存在。</div></div>
+
+<div class="d-section">
+<div class="s-head">Algorithm · 算法</div>
+<div class="formula">
+  Basis vector: <b>e</b><sup>(i)</sup> = [0,…,0,<u>1</u>,0,…,0]<sup>⊤</sup><br>
+  One cycle: for i = 1,…,n:<br>
+  <b>x</b><sup>new</sup> = argmin<sub>α</sub> f(<b>x</b> + α <b>e</b><sup>(i)</sup>)<br>
+  Stop when ‖<b>x</b><sup>end</sup> − <b>x</b><sup>start</sup>‖ &lt; ε
+</div>
+<ol class="steps">
+<li>Choose a starting point x<sup>(1)</sup>. 选择初始点。</li>
+<li>For each axis i = 1 to n: do a 1D line search along that axis, all others fixed. 依次沿每个坐标轴做一维线搜索，其余坐标固定。</li>
+<li>After all n axes (one full cycle), check total displacement. If ‖Δx‖ &lt; ε, stop. 完成所有轴后检查总位移，若足够小则停止。</li>
+<li>Acceleration option: after each cycle, also search along d = x<sup>end</sup> − x<sup>start</sup>. 加速选项：每轮后沿总进展方向额外搜索一次。</li>
+</ol>
+</div>
+
+<div class="d-section">
+<div class="s-head">Interactive Demo · 交互演示</div>
+<div class="prose">Watch cyclic coordinate search on a rotated ellipse. Toggle the acceleration step to see the difference. The green circle marks the true minimum.
+<div class="zh">观察循环坐标搜索在旋转椭圆函数上的轨迹。开启加速步观察差异。绿圈是真实极小值。</div></div>
+<div class="vbox">
+<div class="vtb">
+  <span class="vtb-lbl">Controls ·</span>
+  <button class="vbtn go" onclick="cyStep()">Next axis step →</button>
+  <button class="vbtn" onclick="cyAuto()" id="cy-auto-btn">Auto-play ▶</button>
+  <button class="vbtn" id="cy-acc-btn" onclick="cyToggleAcc()">+ Acceleration step</button>
+  <button class="vbtn" onclick="cyReset()">Reset</button>
+  <span style="flex:1"></span><span style="font-size:12px;color:var(--ink3)">Step: <b id="cy-sn">0</b></span>
+</div>
+<div class="vleg">
+  <div class="vl"><div class="vls" style="background:rgba(184,96,64,.15);border:1px solid var(--rust)"></div>Contours</div>
+  <div class="vl"><div class="vld" style="background:var(--rust)"></div>Path</div>
+  <div class="vl"><div class="vld" style="background:var(--navy);width:11px;height:11px"></div>Current point</div>
+  <div class="vl"><div class="vld" style="background:var(--olive)"></div>True min x*</div>
+  <div class="vl"><div class="vls" style="background:rgba(74,104,136,.35);height:2px"></div>Active axis direction</div>
+</div>
+<div class="vcanv" style="height:360px"><canvas id="cy-cv" height="360"></canvas></div>
+<div class="vnote"><span id="cy-note">Click "Next axis step" to begin. Function: rotated ellipse with diagonal minimum.</span><br><span class="zh" id="cy-zh">点击开始。函数：旋转椭圆，极小值沿对角方向。</span></div>
+</div>
+</div>
+
+<div class="d-section">
+<div class="s-head">The Diagonal Valley Problem · 对角谷问题</div>
+<div class="box red"><div class="lbl">Why it fails · 失效原因</div>
+If the minimum lies along a diagonal, moving along x₁ increases f, and moving along x₂ also increases f. Yet a diagonal move would decrease f. The method is permanently stuck — it cannot take any diagonal step by design.<br>
+<div class="zh">若极小值在对角方向，沿 x₁ 或 x₂ 移动都会使 f 增大，但对角移动会下降。算法被永久卡住——它根本无法走斜线。加速步可缓解但未根本解决。</div></div>
+</div>`,
+
+powell:()=>`
+<div class="d-head"><div class="d-eyebrow">§ 7.2 · Local · 局部</div>
+<div class="d-title">Powell's Method</div>
+<div class="d-sub">Powell 方法 · Self-adapting conjugate directions · 共轭方向</div></div>
+
+<div class="box blue"><div class="lbl">Intuition · 直觉</div>
+Cyclic keeps the same axes forever. Powell's insight: after a cycle, the <em>actual direction you moved</em> is more valuable than any fixed axis. Replace the oldest direction with the overall progress direction. Over cycles, the directions learn the valley geometry.<br>
+<div class="zh">循环坐标搜索永远用同样的轴。Powell 的洞察：一轮结束后，你实际走出来的方向比任何固定轴都有价值。用整体进展方向替换最旧的方向，方向组逐渐学会函数的山谷几何。</div></div>
+
+<div class="d-section">
+<div class="s-head">Algorithm · 算法</div>
+<div class="formula">
+  Init: U = [e<sup>(1)</sup>, …, e<sup>(n)</sup>]&nbsp; (coordinate basis)<br><br>
+  Each cycle:<br>
+  ① For i=1,…,n: x<sup>(i+1)</sup> ← line_search(f, x<sup>(i)</sup>, u<sup>(i)</sup>)<br>
+  ② Shift: u<sup>(i)</sup> ← u<sup>(i+1)</sup> for i=1,…,n−1 &nbsp;(drop oldest)<br>
+  ③ Insert: u<sup>(n)</sup> ← x<sup>(n+1)</sup> − x<sup>(1)</sup> &nbsp;(overall progress)<br>
+  ④ Extra line search along u<sup>(n)</sup>, update x<sup>(1)</sup><br>
+  Stop when ‖Δx‖ &lt; ε
+</div>
+
+<ol class="steps">
+<li>Initialise with n coordinate basis vectors. 用坐标基初始化方向集 U。</li>
+<li>Sequential line searches along u<sup>(1)</sup>,…,u<sup>(n)</sup>. 依次沿 n 个方向做线搜索。</li>
+<li>Drop oldest direction u<sup>(1)</sup>; shift all others forward. 丢弃最旧方向，其余前移。</li>
+<li>Add overall cycle progress as u<sup>(n)</sup>. 将本轮总移动方向加入为 u<sup>(n)</sup>。</li>
+<li>Extra line search along u<sup>(n)</sup>. Check convergence. 沿新方向再做一次线搜索，检查收敛。</li>
+</ol>
+
+<div class="acc">
+<div class="acc-h" onclick="toggleAcc('p1')"><span>Why drop the oldest direction? · 为何丢最旧方向？</span><span class="acc-ico" id="ai-p1">+</span></div>
+<div class="acc-b" id="ab-p1">The oldest direction was added furthest in the past — it reflects the function's geometry from the most distant part of the search history. The newest direction (this cycle's progress) is the most immediately relevant. This is a sliding window over time: always keep the n most recent directions, discard the most stale one.
+<br>最旧方向反映的是最遥远过去的函数几何，信息最陈旧。最新方向（本轮进展）最为即时有用。这是时间滑动窗口：始终保留最近 n 个方向，淘汰最过时的。与内存无关，是信息价值的设计选择。</div>
+</div>
+</div>
+
+<div class="d-section">
+<div class="s-head">Quadratic Guarantee · 二次函数保证</div>
+<div class="box gold"><div class="lbl">Theoretical guarantee · 理论保证</div>
+After k full iterations, the last k directions in U are mutually <b>conjugate</b> w.r.t. the Hessian: u<sup>(i)⊤</sup>Hu<sup>(j)</sup> = 0 for i≠j. Since n conjugate line searches exactly minimise a quadratic, n full Powell iterations exactly solve any quadratic function (n(n+1) total searches).<br>
+<div class="zh">k 轮后，U 中最后 k 个方向关于 Hessian 相互共轭。n 个共轭方向可精确最小化 n 维二次函数。因此 n 轮 Powell 迭代精确求解任意二次规划。</div></div>
+</div>
+
+<div class="d-section">
+<div class="s-head">Limitation · 局限</div>
+<div class="box red"><div class="lbl">Linear dependence risk · 线性相关风险</div>
+Repeatedly inserting the progress direction can make all n directions linearly dependent — they collapse into a subspace and lose coverage of ℝⁿ.<br>
+<b>Fix:</b> Reset U to coordinate basis every n or n+1 iterations.<br>
+<div class="zh">反复插入进展方向可能使 n 个方向线性相关，无法覆盖全空间。修复：每 n 或 n+1 轮将 U 重置为坐标基向量。</div></div>
+</div>`,
+
+hooke:()=>`
+<div class="d-head"><div class="d-eyebrow">§ 7.3 · Local · 局部</div>
+<div class="d-title">Hooke-Jeeves Method</div>
+<div class="d-sub">Hooke-Jeeves 方法 · Direct search · 坐标探步</div></div>
+
+<div class="box blue"><div class="lbl">Intuition · 直觉</div>
+Powell still does full (expensive) line searches. Hooke-Jeeves asks: why not just take cheap probing steps of ±α in each direction? Accept any improvement; if nothing works, the step was probably too large — shrink it and retry. Like a cautious hiker who tests each footstep before committing.<br>
+<div class="zh">Powell 仍做完整（昂贵的）线搜索。Hooke-Jeeves 反问：为何不直接走 ±α 小步探测？接受任何改善；若无改善则说明步子太大，缩小再试。像谨慎登山者先试探脚下再迈步。</div></div>
+
+<div class="d-section">
+<div class="s-head">Algorithm · 算法</div>
+<div class="formula">
+  Parameters: step α, decay γ∈(0,1) default 0.5, tolerance ε<br><br>
+  Each iteration — for i = 1,…,n:<br>
+  evaluate f(x + αe<sup>(i)</sup>) and f(x − αe<sup>(i)</sup>)<br>
+  keep the best among all 2n probes (if better than current x)<br><br>
+  if improved: keep α &nbsp;&nbsp; else: α ← γ·α<br>
+  stop when α &lt; ε
+</div>
+<ol class="steps">
+<li>Probe 2n neighbours: x ± αe<sup>(i)</sup> for each coordinate i. Accept the best improvement. 在 2n 个邻近点求值，接受最优改善。</li>
+<li>If nothing improved: shrink α ← γ·α. 若无改善：缩减步长。</li>
+<li>Terminate when α &lt; ε. 步长小于容忍度时终止。</li>
+</ol>
+</div>
+
+<div class="fact-row">
+<div class="fact"><div class="fk">Cost per step · 每步代价</div><div class="fv">2n function evaluations. At n=100: 200 evals/step. At n=1000: 2000 evals/step.</div></div>
+<div class="fact"><div class="fk">What does termination mean? · 终止意味着什么？</div><div class="fv">α &lt; ε only means "no step of size α improves f" — NOT that you're near a local minimum. Could be a plateau or saddle.</div></div>
+</div>
+
+<div class="box red"><div class="lbl">Limitation · 局限</div>
+2n evaluations per step is wasteful. Mathematical theory shows that a much smaller set of directions — just n+1 — can still guarantee descent, as long as the directions positively span the space.<br>
+<div class="zh">每步 2n 次求值有浪费。数学理论表明，只需 n+1 个"正生成集"方向就能保证存在下降方向。</div></div>`,
+
+pattern:()=>`
+<div class="d-head"><div class="d-eyebrow">§ 7.4 · Local · 局部</div>
+<div class="d-title">Generalized Pattern Search</div>
+<div class="d-sub">广义模式搜索 · Mesh adaptive direct search · 正生成集</div></div>
+
+<div class="box blue"><div class="lbl">Key Insight · 关键洞察</div>
+Hooke-Jeeves uses 2n directions (±1 on each axis). The real requirement is much weaker: you only need a set of directions that "positively spans" ℝⁿ. The minimum such set has n+1 directions. This means 2n directions are roughly twice as many as necessary.<br>
+<div class="zh">Hooke-Jeeves 用 2n 个方向。真正的要求弱得多：只需一组「正生成」ℝⁿ 的方向。最小正生成集只有 n+1 个方向。这意味着 2n 方向大约多了一倍。</div></div>
+
+<div class="d-section">
+<div class="s-head">Positive Spanning Set · 正生成集</div>
+<div class="box gold"><div class="lbl">Definition · 定义</div>
+D = {d<sup>(1)</sup>,…,d<sup>(m)</sup>} <b>positively spans</b> ℝⁿ if every v∈ℝⁿ can be written as a <em>nonnegative</em> linear combination: v = Σ λⱼd<sup>(j)</sup>, λⱼ ≥ 0.<br>
+<b>Why it matters:</b> at any point where ∇f≠0, at least one direction in D must be a descent direction. No matter which way "downhill" is, you're covered.<br>
+<div class="zh">正生成集的意义：在任何梯度非零的点，D 中至少有一个方向是下降方向。无论「下坡」朝哪个方向，你都有覆盖。最少只需 n+1 个方向（vs Hooke-Jeeves 的 2n 个）。</div></div>
+</div>
+
+<div class="d-section">
+<div class="s-head">Algorithm with Enhancements · 增强版算法</div>
+<div class="formula">
+  Pattern: P = {x + αd | d ∈ D}<br><br>
+  For each d ∈ D in order:<br>
+  &nbsp;&nbsp;if f(x + αd) &lt; f(x):<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;x ← x + αd &nbsp;&nbsp;(accept immediately · 立即接受)<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;move d to front of D &nbsp;&nbsp;(dynamic ordering · 动态排序)<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;break<br>
+  if no improvement: α ← γ·α &nbsp;&nbsp; stop when α &lt; ε
+</div>
+
+<div class="acc">
+<div class="acc-h" onclick="toggleAcc('p2')"><span>Opportunistic acceptance · 机会性接受</span><span class="acc-ico" id="ai-p2">+</span></div>
+<div class="acc-b" id="ab-p2">Instead of evaluating all n+1 directions and picking the best, accept the first direction that improves f and immediately move there. Start the next iteration from the new point. Avoids wasting evaluations on directions you won't use.
+不评估所有方向再选最优，而是接受第一个改善 f 的方向，立即移动，开始下一轮。避免对不会用到的方向的无效求值。</div>
+</div>
+<div class="acc">
+<div class="acc-h" onclick="toggleAcc('p3')"><span>Dynamic ordering · 动态排序</span><span class="acc-ico" id="ai-p3">+</span></div>
+<div class="acc-b" id="ab-p3">When direction d successfully improves f, move it to the front of list D for the next iteration. If it worked this time, it's likely to work next time too — try the best horse first.
+当方向 d 成功改善 f，将它移到下一轮方向列表最前面。这次有效，下次也可能有效——先试最有可能成功的方向。</div>
+</div>
+
+<div class="box red"><div class="lbl">Limitation · 局限</div>
+Still local — can converge to a local minimum. No global guarantee. The convergence results only say: "converges to a point where no pattern direction improves f" — not "converges to the global minimum."<br>
+<div class="zh">仍是局部方法，可能收敛到局部极小值。收敛保证只说「收敛到所有方向均无改善的点」，不保证全局最小值。</div></div>`,
+
+nelder:()=>`
+<div class="d-head"><div class="d-eyebrow">§ 7.5 · Local · 局部</div>
+<div class="d-title">Nelder-Mead Simplex</div>
+<div class="d-sub">Nelder-Mead 单纯形法 · Amoeba method · 几何变形法</div></div>
+
+<div class="box blue"><div class="lbl">The Big Idea · 核心思想</div>
+All previous methods search from a single point. Nelder-Mead maintains an entire geometric body: a simplex of n+1 points (triangle in 2D, tetrahedron in 3D). The shape deforms like an amoeba — expanding toward good regions, contracting away from bad ones. No line searches.<br>
+<div class="zh">前面所有方法都从单个点搜索。Nelder-Mead 维护一个完整的几何体：n+1 个点的单纯形（2D 是三角形，3D 是四面体）。形状像变形虫——向好的区域扩展，远离差的区域。不做任何线搜索。</div></div>
+
+<div class="d-section">
+<div class="s-head">Setup & Sorting · 初始化与排序</div>
+<div class="formula">
+  Sort vertices: y<sup>(1)</sup> ≤ y<sup>(2)</sup> ≤ … ≤ y<sup>(n+1)</sup>&nbsp; where y<sup>(i)</sup> = f(x<sup>(i)</sup>)<br>
+  x<sub>ℓ</sub> = best, x<sub>s</sub> = second-worst, x<sub>h</sub> = worst<br>
+  x̄ = centroid of all vertices except x<sub>h</sub>
+</div>
+</div>
+
+<div class="d-section">
+<div class="s-head">The Four Operations · 四种变形操作（点击卡片高亮）</div>
+<div class="op-grid">
+<div class="op-c ref on" onclick="nmHL('ref');nmDraw()">
+  <div class="op-h">① Reflection 反射</div>
+  <div class="op-f">x<sub>r</sub> = x̄ + α(x̄ − x<sub>h</sub>), α=1</div>
+  <div class="op-d">Flip the worst point over the centroid. Usually the first move — send the bad vertex to the opposite side.<br><span style="color:var(--ink3);font-style:italic;">将最差点关于质心翻转，是最常用的基本操作。</span></div>
+</div>
+<div class="op-c exp" onclick="nmHL('exp');nmDraw()">
+  <div class="op-h">② Expansion 扩展</div>
+  <div class="op-f">x<sub>e</sub> = x̄ + β(x<sub>r</sub> − x̄), β=2</div>
+  <div class="op-d">Reflection found a great point (y<sub>r</sub> &lt; y<sub>ℓ</sub>) — go even further in that direction.<br><span style="color:var(--ink3);font-style:italic;">反射点比最好点还好时，沿同方向继续扩展。</span></div>
+</div>
+<div class="op-c con" onclick="nmHL('con');nmDraw()">
+  <div class="op-h">③ Contraction 收缩</div>
+  <div class="op-f">x<sub>c</sub> = x̄ + γ(x<sub>h</sub> − x̄), γ=0.5</div>
+  <div class="op-d">Reflection failed (y<sub>r</sub> ≥ y<sub>s</sub>) — pull the bad vertex toward the centroid instead.<br><span style="color:var(--ink3);font-style:italic;">反射失败时，向质心方向收缩最差点。</span></div>
+</div>
+<div class="op-c shr" onclick="nmHL('shr');nmDraw()">
+  <div class="op-h">④ Shrinkage 缩减</div>
+  <div class="op-f">x<sup>(i)</sup> ← (x<sup>(i)</sup> + x<sub>ℓ</sub>)/2</div>
+  <div class="op-d">Last resort: pull all vertices halfway toward the best point. The whole simplex shrinks.<br><span style="color:var(--ink3);font-style:italic;">最后手段：所有顶点向最好点靠拢一半。</span></div>
+</div>
+</div>
+</div>
+
+<div class="d-section">
+<div class="s-head">Interactive Demo · 交互演示</div>
+<div class="vbox">
+<div class="vtb">
+  <button class="vbtn go" onclick="nmStep()">Next operation →</button>
+  <button class="vbtn" onclick="nmReset()">Reset</button>
+  <span style="flex:1"></span>
+  <span style="font-size:12px;color:var(--ink3)">Iter: <b id="nm-i">0</b>&nbsp; Op: <b id="nm-op">—</b></span>
+</div>
+<div class="vleg">
+  <div class="vl"><div class="vld" style="background:var(--olive)"></div>Best x<sub>ℓ</sub></div>
+  <div class="vl"><div class="vld" style="background:var(--navy)"></div>2nd worst x<sub>s</sub></div>
+  <div class="vl"><div class="vld" style="background:var(--rust)"></div>Worst x<sub>h</sub></div>
+  <div class="vl"><div class="vld" style="background:var(--gold)"></div>Candidate</div>
+  <div class="vl"><div class="vld" style="background:var(--teal)"></div>True min x*</div>
+</div>
+<div class="vcanv" style="height:380px"><canvas id="nm-cv" height="380"></canvas></div>
+<div class="vnote"><span id="nm-note">Click "Next operation" to watch the simplex deform. Click operation cards above to highlight them.</span><br><span class="zh" id="nm-zh">点击「下一步操作」观察单纯形变形。点击上方操作卡片可高亮对应操作。</span></div>
+</div>
+</div>
+
+<div class="box gold"><div class="lbl">Convergence criterion · 收敛判据</div>
+Nelder-Mead checks the standard deviation of function values across all vertices — not the movement of points. High std = simplex spans curved region (still optimising). Low std = all values similar = flat region = converged.<br>
+<div class="zh">检查所有顶点函数值的标准差，而非点位置的变化。标准差大说明仍在优化；标准差小说明已收敛到平坦区域。σ = std(y<sup>(1)</sup>,…,y<sup>(n+1)</sup>) &lt; ε 即停止。</div></div>
+
+<div class="box red"><div class="lbl">Limitation · 局限</div>
+No rigorous global convergence guarantee. Can converge to a saddle point or plateau. No theoretical guarantee in high dimensions (n &gt; 2). In practice works well for smooth low-dimensional problems.<br>
+<div class="zh">无严格全局收敛保证。可能收敛到鞍点或平坦区域。高维（n&gt;2）无理论保证。但对低维光滑黑盒问题实践效果很好。</div></div>`,
+
+direct:()=>`
+<div class="d-head"><div class="d-eyebrow">§ 7.6 · Global · 全局</div>
+<div class="d-title">DIRECT — Divided Rectangles</div>
+<div class="d-sub">分矩形算法 · DIvided RECTangles · Lipschitzian global optimisation</div></div>
+
+<div class="box teal"><div class="lbl">The Problem DIRECT Solves · DIRECT 解决的问题</div>
+All five previous methods are local — they find some minimum but offer no guarantee it's the global one. Shubert-Piyavskii (§3.6) achieves global guarantees via Lipschitz lower bounds, but requires knowing ℓ (usually unavailable) and becomes geometrically intractable in multiple dimensions. DIRECT solves both problems at once.<br>
+<div class="zh">前五种方法都是局部的。Shubert-Piyavskii 有全局保证但需要 Lipschitz 常数 ℓ（通常未知），且高维时几何结构极其复杂。DIRECT 同时解决了这两个问题。</div></div>
+
+<div class="d-section">
+<div class="s-head">The Lipschitz V-Bound Intuition · Lipschitz V 形下界直觉</div>
+<div class="prose">The key physical intuition is this: if a function has Lipschitz constant ℓ, then from any sampled point (c, f(c)), the function can't change faster than slope ±ℓ. This creates a V-shaped lower bound centered at each sample point.
+<div class="zh">关键直觉：若函数 Lipschitz 常数为 ℓ，则从任何采样点 (c, f(c)) 出发，函数变化速度不超过斜率 ±ℓ。这在每个采样点产生一个 V 形下界。</div></div>
+
+<div class="vbox">
+<div class="vtb">
+  <span class="vtb-lbl">Lipschitz lower bound visualisation ·</span>
+  <button class="vbtn go" onclick="lbStep()">Add sample point →</button>
+  <button class="vbtn" onclick="lbReset()">Reset</button>
+  <span style="flex:1"></span>
+</div>
+<div class="vleg">
+  <div class="vl"><div class="vls" style="background:rgba(90,120,72,.7)"></div>True function f(x)</div>
+  <div class="vl"><div class="vld" style="background:var(--rust)"></div>Sampled points</div>
+  <div class="vl"><div class="vls" style="background:rgba(74,104,136,.5)"></div>V-shaped lower bound (per sample)</div>
+  <div class="vl"><div class="vls" style="background:rgba(184,96,64,.45)"></div>Combined lower bound (sawtooth)</div>
+</div>
+<div class="vcanv" style="height:330px"><canvas id="lb-cv" height="330"></canvas></div>
+<div style="padding:8px 13px;border-bottom:1px solid var(--line);">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <label style="font-size:13px;color:var(--ink2);">Lipschitz constant ℓ =</label>
+    <input type="range" id="lb-ell" min="0.5" max="4" step="0.1" value="1.5" style="flex:1;accent-color:var(--rust);" oninput="lbEllChange(this.value)">
+    <span style="font-size:14px;font-weight:600;color:var(--rust);min-width:32px;" id="lb-ev">1.5</span>
+  </div>
+  <div style="font-size:12px;color:var(--ink3);margin-top:4px;">Drag to see how ℓ affects the lower bound tightness. Larger ℓ = steeper V-shapes = tighter bound.</div>
+</div>
+<div class="vnote"><span id="lb-note">Click "Add sample point" to see how each new sample tightens the lower bound. The sawtooth is the maximum of all V-shapes.</span><br><span class="zh" id="lb-zh">点击添加采样点，观察锯齿形下界如何逐渐收紧。锯齿形是所有 V 形下界的最大值（逐点取最大）。</span></div>
+</div>
+</div>
+
+<div class="d-section">
+<div class="s-head">From Shubert-Piyavskii to DIRECT · 从 SP 到 DIRECT</div>
+<div class="prose">Shubert-Piyavskii samples at the <em>lowest point of the sawtooth lower bound</em> — which requires knowing ℓ. DIRECT's key insight: instead of computing one complex global sawtooth, confine each V-shape to its own rectangle. The lower bound in each region then depends only on the centre value and region size.
+<div class="zh">SP 在锯齿形下界最低点采样——这需要知道 ℓ。DIRECT 的关键洞察：不计算一个复杂的全局锯齿形，而是将每个 V 形限制在自己的矩形内。每个区域的下界只依赖中心值和区域尺寸。</div></div>
+</div>
+
+<div class="d-section">
+<div class="s-head">1D DIRECT: The Convex Hull Selection Rule · 一维 DIRECT：凸壳选择规则</div>
+<div class="box gold"><div class="lbl">Potentially optimal intervals · 潜在最优区间</div>
+Each interval [a,b] is represented as a point (r, f(c)) where r=(b-a)/2 is half-width and f(c) is the centre value. An interval is <b>potentially optimal</b> if there exists some ℓ &gt; 0 such that its lower bound (f(c)−ℓr) is lowest among all intervals. This equals: the interval lies on the <b>lower-right convex hull</b> in (r, f(c)) space.<br>
+Small ℓ → intervals with low f(c) win (exploitation 开采). &nbsp; Large ℓ → intervals with large r win (exploration 探索).<br>
+<div class="zh">每个区间用点 (r, f(c)) 表示（r=半宽度，f(c)=中心值）。潜在最优区间 = 对某个有效 ℓ，其下界 f(c)−ℓr 最低 = 在「r vs f(c)」平面的右下凸壳上。凸壳规则同时覆盖所有可能的 ℓ，无需指定任何一个。</div></div>
+
+<div class="vbox">
+<div class="vtb">
+  <span class="vtb-lbl">View ·</span>
+  <button class="vbtn act" id="dt-iv-btn" onclick="dtTab('iv')">Interval View 区间视图</button>
+  <button class="vbtn" id="dt-sp-btn" onclick="dtTab('sp')">Selection Plot 选择图</button>
+  <span style="flex:1"></span>
+  <button class="vbtn go" onclick="dtStep()">Trisect next 三等分 →</button>
+  <button class="vbtn" onclick="dtReset()">Reset</button>
+  <span style="font-size:12px;color:var(--ink3);margin-left:8px">Iter: <b id="dt-i">0</b></span>
+</div>
+<div id="dt-iv-w">
+<div class="vleg">
+  <div class="vl"><div class="vls" style="background:rgba(90,120,72,.7)"></div>True f(x)</div>
+  <div class="vl"><div class="vld" style="background:var(--navy)"></div>Sampled centres</div>
+  <div class="vl"><div class="vls" style="background:rgba(58,122,114,.2);border:2px solid var(--teal)"></div>Potentially optimal (selected)</div>
+  <div class="vl"><div class="vls" style="background:rgba(184,96,64,.08);border:1px solid rgba(184,96,64,.25)"></div>Other intervals</div>
+</div>
+<div class="vcanv" style="height:320px"><canvas id="dt-iv" height="320"></canvas></div>
+</div>
+<div id="dt-sp-w" style="display:none">
+<div class="vleg">
+  <div class="vl"><div class="vld" style="background:var(--navy)"></div>Interval point (r, f(c))</div>
+  <div class="vl"><div class="vld" style="background:var(--teal);width:12px;height:12px;border:2px solid rgba(58,122,114,.8)"></div>Potentially optimal</div>
+  <div class="vl"><div class="vls" style="background:var(--gold);height:3px;width:28px"></div>Convex hull boundary 凸壳下边界</div>
+</div>
+<div class="vcanv" style="height:320px"><canvas id="dt-sp" height="320"></canvas></div>
+</div>
+<div class="vnote"><span id="dt-note">Click "Trisect next" to split selected intervals. Switch to "Selection Plot" to see the convex hull rule — green dots are selected.</span><br><span class="zh" id="dt-zh">点击三等分潜在最优区间。切换到「选择图」查看凸壳规则——绿色点是本轮被选中的区间。</span></div>
+</div>
+</div>
+
+<div class="d-section">
+<div class="s-head">Multivariate Extension · 多维推广</div>
+<ol class="steps">
+<li><b>Normalise to [0,1]ⁿ first.</b> Scale the search box so all dimensions are on equal footing. Without this, a dimension with range [0,1000] would always look "longest." 先归一化到 [0,1]ⁿ，使所有维度可比。否则范围大的维度会永远被视为最长。</li>
+<li><b>Track split counts per dimension.</b> For each rectangle, record kᵢ = number of times dimension i has been split. Half-width in dimension i = (1/2)·3^(−kᵢ). 记录每个维度的分割次数 kᵢ，第 i 维半宽度为 (1/2)·3^(−kᵢ)。</li>
+<li><b>Split only the widest dimensions.</b> In each rectangle, only trisect dimensions with smallest kᵢ (widest sides). 只分割最宽的维度（kᵢ 最小的维度）。</li>
+<li><b>Split the most promising dimension first.</b> Among the widest dimensions, sample two new centres; assign the larger sub-rectangles to whichever has lower f value — giving more search budget to the more promising direction. 在最宽的维度中，优先分割函数值较低的维度，使其获得更大的子矩形。</li>
+</ol>
+</div>
+
+<div class="fact-row">
+<div class="fact"><div class="fk">DIRECT vs Shubert-Piyavskii</div><div class="fv">SP: needs ℓ, 1D only, exact sawtooth, exact guarantee.<br>DIRECT: no ℓ, any n-dim, rectangle approximation, asymptotic guarantee.</div></div>
+<div class="fact"><div class="fk">When does DIRECT shine? · 最适合何时？</div><div class="fv">Global minimum needed, bounded domain, moderate dimensions (n ≤ ~20). For very high dimensions, all global methods suffer the curse of dimensionality. 有界域、需要全局最小值、中等维度（n ≤ 20 左右）。</div></div>
+</div>`,
+};
+
+// ═══════════════════════════════════════
+// CANVAS: CYCLIC
+// ═══════════════════════════════════════
+function cyF(x,y){const u=x-2,v=y-1.5;return 1.5*u*u+3*v*v+2.2*u*v;}
+let cyX=0,cyY=3.5,cyCoord=0,cyPts=[],cySN=0,cyAccOn=false,cyTimer=null;
+function cyReset(){cyX=0;cyY=3.5;cyCoord=0;cyPts=[[cyX,cyY]];cySN=0;if(cyTimer){clearInterval(cyTimer);cyTimer=null;const b=document.getElementById('cy-auto-btn');if(b)b.textContent='Auto-play ▶';}const n=document.getElementById('cy-sn');if(n)n.textContent='0';cyDraw();}
+function cyToggleAcc(){cyAccOn=!cyAccOn;const b=document.getElementById('cy-acc-btn');if(b)b.textContent=cyAccOn?'− Acceleration':'+ Acceleration';}
+function cyAuto(){if(cyTimer){clearInterval(cyTimer);cyTimer=null;const b=document.getElementById('cy-auto-btn');if(b)b.textContent='Auto-play ▶';}else{cyTimer=setInterval(()=>{cyStep();if(cySN>=30)cyReset();},380);const b=document.getElementById('cy-auto-btn');if(b)b.textContent='Stop ■';}}
+function cyStep(){
+  const cv=document.getElementById('cy-cv');if(!cv)return;
+  if(cyCoord===0){let bx=cyX,bv=cyF(cyX,cyY);for(let t=-1;t<=6;t+=.004){const v=cyF(t,cyY);if(v<bv){bv=v;bx=t;}}cyX=bx;}
+  else{let by=cyY,bv=cyF(cyX,cyY);for(let t=-0.5;t<=5;t+=.004){const v=cyF(cyX,t);if(v<bv){bv=v;by=t;}}cyY=by;}
+  cyCoord=1-cyCoord;
+  if(cyAccOn&&cyCoord===0&&cyPts.length>1){
+    const d=[cyX-cyPts[cyPts.length-1][0],cyY-cyPts[cyPts.length-1][1]];
+    const len=Math.sqrt(d[0]*d[0]+d[1]*d[1]);
+    if(len>0.001){let ba=0,bv=cyF(cyX,cyY);for(let a=-3;a<=3;a+=.004){const nx=cyX+a*d[0]/len,ny=cyY+a*d[1]/len;if(nx>=-1&&nx<=6&&ny>=-0.5&&ny<=5){const v=cyF(nx,ny);if(v<bv){bv=v;ba=a;}}}cyX+=ba*d[0]/len;cyY+=ba*d[1]/len;}
+  }
+  cyPts.push([cyX,cyY]);cySN++;
+  const n=document.getElementById('cy-sn');if(n)n.textContent=cySN;
+  const ax=cyCoord===0?'x₂':'x₁';
+  const nn=document.getElementById('cy-note'),nz=document.getElementById('cy-zh');
+  if(nn)nn.textContent=`Step ${cySN}: at (${cyX.toFixed(2)}, ${cyY.toFixed(2)}), f=${cyF(cyX,cyY).toFixed(3)}. Next: search along ${ax}. True min near (2, 1.5).`;
+  if(nz)nz.textContent=`第${cySN}步：当前点(${cyX.toFixed(2)},${cyY.toFixed(2)})，f=${cyF(cyX,cyY).toFixed(3)}。下步沿${ax}搜索。`;
+  cyDraw();
+}
+function cyDraw(){
+  const cv=document.getElementById('cy-cv');if(!cv)return;
+  const[ctx,W,H]=rc(cv,360);
+  const PL=42,PR=16,PT=14,PB=26,w=W-PL-PR,h=H-PT-PB;
+  const XA=-1,XB=5.5,YA=-0.5,YB=4.8;
+  const xP=x=>PL+(x-XA)/(XB-XA)*w,yP=y=>PT+(1-(y-YA)/(YB-YA))*h;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.p2;ctx.fillRect(PL,PT,w,h);
+  const NX=80,NY=80,lvs=[0.4,1,2,4,7,11,17];
+  const cols=['rgba(184,96,64,0.06)','rgba(184,96,64,0.09)','rgba(184,96,64,0.12)','rgba(184,96,64,0.14)','rgba(184,96,64,0.17)','rgba(184,96,64,0.19)','rgba(184,96,64,0.21)'];
+  for(let iy=0;iy<NY;iy++)for(let ix=0;ix<NX;ix++){
+    const v=cyF(XA+(ix+.5)/NX*(XB-XA),YA+(iy+.5)/NY*(YB-YA));
+    const li=lvs.findIndex(l=>v<l);
+    if(li>=0){ctx.fillStyle=cols[li];ctx.fillRect(xP(XA+ix/NX*(XB-XA)),yP(YA+(iy+1)/NY*(YB-YA)),w/NX+1.5,h/NY+1.5);}
+  }
+  // grid
+  ctx.strokeStyle='rgba(100,70,30,0.22)';ctx.lineWidth=0.7;
+  ctx.beginPath();ctx.moveTo(PL,PT);ctx.lineTo(PL,PT+h);ctx.lineTo(PL+w,PT+h);ctx.stroke();
+  // current axis guide
+  if(cyPts.length>0){
+    ctx.strokeStyle='rgba(74,104,136,0.35)';ctx.lineWidth=0.8;ctx.setLineDash([4,3]);
+    if(cyCoord===0){ctx.beginPath();ctx.moveTo(xP(XA),yP(cyY));ctx.lineTo(xP(XB),yP(cyY));}
+    else{ctx.beginPath();ctx.moveTo(xP(cyX),yP(YA));ctx.lineTo(xP(cyX),yP(YB));}
+    ctx.stroke();ctx.setLineDash([]);
+  }
+  // path
+  if(cyPts.length>1){
+    ctx.strokeStyle=C.rust;ctx.lineWidth=1.6;ctx.setLineDash([4,3]);ctx.beginPath();
+    cyPts.forEach((p,i)=>i===0?ctx.moveTo(xP(p[0]),yP(p[1])):ctx.lineTo(xP(p[0]),yP(p[1])));
+    ctx.stroke();ctx.setLineDash([]);
+  }
+  // points
+  cyPts.forEach((p,i)=>{
+    ctx.beginPath();ctx.arc(xP(p[0]),yP(p[1]),i===cyPts.length-1?6:3.5,0,2*Math.PI);
+    ctx.fillStyle=i===cyPts.length-1?C.navy:C.rust;ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.55)';ctx.lineWidth=0.8;ctx.stroke();
+  });
+  // true min
+  ctx.beginPath();ctx.arc(xP(2),yP(1.5),6,0,2*Math.PI);
+  ctx.strokeStyle=C.olive;ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle=C.ink3;ctx.font='11px serif';ctx.textAlign='center';ctx.fillText('x*',xP(2)+13,yP(1.5)-9);
+  // axis ticks
+  ctx.fillStyle=C.ink3;ctx.font='10px serif';ctx.textAlign='center';
+  [-1,0,1,2,3,4,5].forEach(v=>ctx.fillText(v,xP(v),PT+h+14));
+  ctx.textAlign='right';
+  [0,1,2,3,4].forEach(v=>ctx.fillText(v,PL-4,yP(v)+4));
+}
+
+// ═══════════════════════════════════════
+// CANVAS: NELDER-MEAD
+// ═══════════════════════════════════════
+function nmF(x,y){return (x-1.8)*(x-1.8)+2.2*(y-1.2)*(y-1.2)+0.35*Math.sin(3.5*x)+0.25*Math.cos(2.2*y);}
+let nmS=null,nmIN=0,nmCurOp='ref';
+function nmReset(){nmS=[[0.2,3.4],[3.3,2.9],[2.0,0.3]];nmIN=0;const i=document.getElementById('nm-i'),o=document.getElementById('nm-op');if(i)i.textContent='0';if(o)o.textContent='—';nmDraw();}
+function nmStep(){
+  if(!nmS){nmReset();return;}
+  const ys=nmS.map(p=>nmF(p[0],p[1]));
+  const ord=[0,1,2].sort((a,b)=>ys[a]-ys[b]);
+  const xl=nmS[ord[0]],xs=nmS[ord[1]],xh=nmS[ord[2]];
+  const yl=ys[ord[0]],ys2=ys[ord[1]],yh=ys[ord[2]];
+  const xm=[(xl[0]+xs[0])/2,(xl[1]+xs[1])/2];
+  const xr=[xm[0]+(xm[0]-xh[0]),xm[1]+(xm[1]-xh[1])];
+  const yr=nmF(xr[0],xr[1]);
+  let op='',np=null;
+  if(yr<yl){
+    const xe=[xm[0]+2*(xr[0]-xm[0]),xm[1]+2*(xr[1]-xm[1])];
+    const ye=nmF(xe[0],xe[1]);
+    if(ye<yr){op='Expansion 扩展';np=xe;nmCurOp='exp';}else{op='Reflection 反射';np=xr;nmCurOp='ref';}
+  }else if(yr<ys2){op='Reflection 反射';np=xr;nmCurOp='ref';
+  }else{
+    const src=yr<=yh?xr:xh;
+    const xc=[xm[0]+0.5*(src[0]-xm[0]),xm[1]+0.5*(src[1]-xm[1])];
+    const yc=nmF(xc[0],xc[1]);
+    if(yc<=Math.min(yr,yh)){op='Contraction 收缩';np=xc;nmCurOp='con';}
+    else{
+      op='Shrinkage 缩减';nmCurOp='shr';
+      nmS=[xl,[(nmS[ord[1]][0]+xl[0])/2,(nmS[ord[1]][1]+xl[1])/2],[(nmS[ord[2]][0]+xl[0])/2,(nmS[ord[2]][1]+xl[1])/2]];
+      nmIN++;const i=document.getElementById('nm-i'),o=document.getElementById('nm-op');if(i)i.textContent=nmIN;if(o)o.textContent=op;
+      nmHL(nmCurOp);
+      const nn=document.getElementById('nm-note'),nz=document.getElementById('nm-zh');
+      if(nn)nn.textContent=`Step ${nmIN}: ${op} — all vertices pull halfway toward best point xℓ.`;
+      if(nz)nz.textContent=`第${nmIN}步：${op} — 所有顶点向最好点靠拢一半。`;
+      nmDraw();return;
+    }
+  }
+  nmS[ord[2]]=np;nmIN++;
+  const i=document.getElementById('nm-i'),o=document.getElementById('nm-op');if(i)i.textContent=nmIN;if(o)o.textContent=op;
+  nmHL(nmCurOp);
+  const nn=document.getElementById('nm-note'),nz=document.getElementById('nm-zh');
+  if(nn)nn.textContent=`Step ${nmIN}: ${op} → new vertex (${np[0].toFixed(2)}, ${np[1].toFixed(2)}), f=${nmF(np[0],np[1]).toFixed(3)}.`;
+  if(nz)nz.textContent=`第${nmIN}步：${op} → 新顶点(${np[0].toFixed(2)},${np[1].toFixed(2)})，f=${nmF(np[0],np[1]).toFixed(3)}。`;
+  nmDraw();
+}
+function nmDraw(){
+  const cv=document.getElementById('nm-cv');if(!cv||!nmS)return;
+  const[ctx,W,H]=rc(cv,380);
+  const PL=42,PR=16,PT=14,PB=26,w=W-PL-PR,h=H-PT-PB;
+  const XA=-0.5,XB=4.2,YA=-0.5,YB=4.2;
+  const xP=x=>PL+(x-XA)/(XB-XA)*w,yP=y=>PT+(1-(y-YA)/(YB-YA))*h;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.p2;ctx.fillRect(PL,PT,w,h);
+  const NX=70,NY=70,lvs=[0.3,0.8,1.5,2.5,4,6,9];
+  const cols=['rgba(74,104,136,0.07)','rgba(74,104,136,0.10)','rgba(74,104,136,0.13)','rgba(74,104,136,0.16)','rgba(74,104,136,0.18)','rgba(74,104,136,0.20)','rgba(74,104,136,0.22)'];
+  for(let iy=0;iy<NY;iy++)for(let ix=0;ix<NX;ix++){
+    const v=nmF(XA+(ix+.5)/NX*(XB-XA),YA+(iy+.5)/NY*(YB-YA));
+    const li=lvs.findIndex(l=>v<l);
+    if(li>=0){ctx.fillStyle=cols[li];ctx.fillRect(xP(XA+ix/NX*(XB-XA)),yP(YA+(iy+1)/NY*(YB-YA)),w/NX+1.5,h/NY+1.5);}
+  }
+  ctx.strokeStyle='rgba(100,70,30,0.22)';ctx.lineWidth=0.7;
+  ctx.beginPath();ctx.moveTo(PL,PT);ctx.lineTo(PL,PT+h);ctx.lineTo(PL+w,PT+h);ctx.stroke();
+  const ys=nmS.map(p=>nmF(p[0],p[1]));
+  const ord=[0,1,2].sort((a,b)=>ys[a]-ys[b]);
+  ctx.strokeStyle=C.rust;ctx.lineWidth=1.8;ctx.fillStyle='rgba(184,96,64,0.08)';
+  ctx.beginPath();nmS.forEach((p,i)=>i===0?ctx.moveTo(xP(p[0]),yP(p[1])):ctx.lineTo(xP(p[0]),yP(p[1])));
+  ctx.closePath();ctx.fill();ctx.stroke();
+  const vc=[C.olive,C.navy,C.rust],lb=['xℓ','xs','xh'];
+  ord.forEach((vi,rank)=>{
+    const p=nmS[vi];
+    ctx.beginPath();ctx.arc(xP(p[0]),yP(p[1]),7,0,2*Math.PI);
+    ctx.fillStyle=vc[rank];ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle=C.ink3;ctx.font='12px serif';ctx.textAlign='left';ctx.fillText(lb[rank],xP(p[0])+9,yP(p[1])+4);
+  });
+  ctx.beginPath();ctx.arc(xP(1.8),yP(1.2),5,0,2*Math.PI);ctx.strokeStyle=C.teal;ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle=C.ink3;ctx.font='11px serif';ctx.textAlign='left';ctx.fillText('x*',xP(1.8)+8,yP(1.2)-7);
+}
+
+// ═══════════════════════════════════════
+// CANVAS: LIPSCHITZ BOUND (V-shapes)
+// ═══════════════════════════════════════
+function lbFTrue(x){return Math.sin(x*1.8)+0.5*Math.cos(x*3.5-1)+0.4*Math.sin(x*5.2)+1.5;}
+let lbPts=[],lbEll=1.5,lbXA=-0.2,lbXB=4.2;
+function lbReset(){lbPts=[];lbEll=1.5;const e=document.getElementById('lb-ell');if(e)e.value='1.5';const ev=document.getElementById('lb-ev');if(ev)ev.textContent='1.5';const n=document.getElementById('lb-note');if(n)n.textContent='Click "Add sample point" to see V-shaped lower bounds build up into a sawtooth.';lbDraw();}
+function lbEllChange(v){lbEll=parseFloat(v);const ev=document.getElementById('lb-ev');if(ev)ev.textContent=parseFloat(v).toFixed(1);lbDraw();}
+function lbStep(){
+  const candidates=[0.5,1.0,1.6,2.2,2.8,3.4,3.9,0.2,1.3,3.1];
+  if(lbPts.length>=candidates.length)return;
+  lbPts.push(candidates[lbPts.length]);
+  const n=document.getElementById('lb-note'),z=document.getElementById('lb-zh');
+  if(n)n.textContent=`${lbPts.length} sample point(s). Sawtooth = max of all V-shapes. Notice how each new point clips and tightens the lower bound.`;
+  if(z)z.textContent=`已采样 ${lbPts.length} 个点。锯齿形 = 所有 V 形的逐点最大值。每个新采样点都会截断并收紧下界。`;
+  lbDraw();
+}
+function lbDraw(){
+  const cv=document.getElementById('lb-cv');if(!cv)return;
+  const[ctx,W,H]=rc(cv,330);
+  const PL=46,PR=16,PT=18,PB=28,w=W-PL-PR,h=H-PT-PB;
+  const yMin=-0.8,yMax=3.2;
+  const xP=x=>PL+(x-lbXA)/(lbXB-lbXA)*w,yP=y=>PT+(1-(y-yMin)/(yMax-yMin))*h;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.p2;ctx.fillRect(PL,PT,w,h);
+  ctx.strokeStyle='rgba(100,70,30,0.18)';ctx.lineWidth=0.5;
+  for(let yg=0;yg<=3;yg++){const py=yP(yg);if(py>PT&&py<PT+h){ctx.beginPath();ctx.moveTo(PL,py);ctx.lineTo(PL+w,py);ctx.stroke();}}
+  ctx.strokeStyle='rgba(100,70,30,0.22)';ctx.lineWidth=0.7;
+  ctx.beginPath();ctx.moveTo(PL,PT);ctx.lineTo(PL,PT+h);ctx.lineTo(PL+w,PT+h);ctx.stroke();
+  // V-shapes for each sampled point (thin, individual)
+  if(lbPts.length>0){
+    lbPts.forEach((cx,pi)=>{
+      const fc=lbFTrue(cx);
+      ctx.strokeStyle=`rgba(74,104,136,0.${18+pi*5})`;ctx.lineWidth=0.8;
+      ctx.beginPath();
+      let first=true;
+      for(let k=0;k<=300;k++){
+        const xv=lbXA+k/300*(lbXB-lbXA);
+        const lb=fc-lbEll*Math.abs(xv-cx);
+        const py=yP(lb);
+        if(first){ctx.moveTo(xP(xv),py);first=false;}else ctx.lineTo(xP(xv),py);
+      }
+      ctx.stroke();
+    });
+    // Combined sawtooth (max of all V-shapes)
+    ctx.strokeStyle='rgba(184,96,64,0.75)';ctx.lineWidth=2;
+    ctx.beginPath();let first=true;
+    for(let k=0;k<=400;k++){
+      const xv=lbXA+k/400*(lbXB-lbXA);
+      let lb=-999;
+      lbPts.forEach(cx=>{lb=Math.max(lb,lbFTrue(cx)-lbEll*Math.abs(xv-cx));});
+      const py=yP(lb);
+      if(first){ctx.moveTo(xP(xv),py);first=false;}else ctx.lineTo(xP(xv),py);
+    }
+    ctx.stroke();
+    // fill area between sawtooth and true function
+    ctx.fillStyle='rgba(184,96,64,0.07)';ctx.beginPath();
+    let moveOn=true;
+    for(let k=0;k<=400;k++){
+      const xv=lbXA+k/400*(lbXB-lbXA);
+      let lb=-999;lbPts.forEach(cx=>{lb=Math.max(lb,lbFTrue(cx)-lbEll*Math.abs(xv-cx));});
+      if(moveOn){ctx.moveTo(xP(xv),yP(lb));moveOn=false;}else ctx.lineTo(xP(xv),yP(lb));
+    }
+    for(let k=400;k>=0;k--){const xv=lbXA+k/400*(lbXB-lbXA);ctx.lineTo(xP(xv),yP(lbFTrue(xv)));}
+    ctx.closePath();ctx.fill();
+  }
+  // True function
+  ctx.strokeStyle=C.olive;ctx.lineWidth=2.2;
+  ctx.beginPath();
+  for(let k=0;k<=400;k++){const xv=lbXA+k/400*(lbXB-lbXA);const py=yP(lbFTrue(xv));k===0?ctx.moveTo(xP(xv),py):ctx.lineTo(xP(xv),py);}
+  ctx.stroke();
+  // Sample points and their vertex markers
+  lbPts.forEach((cx,pi)=>{
+    const fc=lbFTrue(cx);
+    // dot at sample
+    ctx.beginPath();ctx.arc(xP(cx),yP(fc),5,0,2*Math.PI);ctx.fillStyle=C.rust;ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=0.8;ctx.stroke();
+    // dashed drop to sawtooth floor
+    ctx.setLineDash([3,3]);ctx.strokeStyle='rgba(184,96,64,0.3)';ctx.lineWidth=0.6;
+    ctx.beginPath();ctx.moveTo(xP(cx),yP(fc));ctx.lineTo(xP(cx),yP(fc-lbEll*(lbXB-lbXA)/2));ctx.stroke();
+    ctx.setLineDash([]);
+  });
+  // legend label
+  ctx.fillStyle=C.ink3;ctx.font='10px serif';ctx.textAlign='center';
+  [0,1,2,3,4].forEach(v=>{const px=xP(v);if(px>PL&&px<PL+w)ctx.fillText(v,px,PT+h+15);});
+  ctx.textAlign='right';[0,1,2,3].forEach(v=>ctx.fillText(v,PL-4,yP(v)+4));
+}
+
+// ═══════════════════════════════════════
+// CANVAS: DIRECT
+// ═══════════════════════════════════════
+function dtF(x){return Math.sin(6*x)+Math.sin(10*x)+0.3*Math.cos(15*x)+1.4;}
+let dtIvs=[],dtTabCur='iv';
+function dtReset(){dtIvs=[{a:0,b:1,fc:dtF(0.5)}];const i=document.getElementById('dt-i');if(i)i.textContent='0';setDTNote('Initial: one interval [0,1].','初始：单个区间 [0,1]，中心 x=0.5。');dtDraw();}
+function dtGetOpt(){
+  const byR={};dtIvs.forEach((iv,i)=>{const k=((iv.b-iv.a)/2).toFixed(11);if(!(k in byR)||iv.fc<dtIvs[byR[k]].fc)byR[k]=i;});
+  const c=Object.values(byR).map(i=>dtIvs[i]).sort((a,b)=>((a.b-a.a)/2)-((b.b-b.a)/2));
+  if(c.length<=1)return c;
+  const hull=[];for(const p of c){while(hull.length>=2){const a=hull[hull.length-2],b=hull[hull.length-1];const ra=(a.b-a.a)/2,rb=(b.b-b.a)/2,rp=(p.b-p.a)/2;if((p.fc-b.fc)/(rp-rb)<=(b.fc-a.fc)/(rb-ra))hull.pop();else break;}hull.push(p);}
+  const hk=new Set(hull.map(iv=>iv.a.toFixed(11)+','+iv.b.toFixed(11)));
+  return dtIvs.filter(iv=>hk.has(iv.a.toFixed(11)+','+iv.b.toFixed(11)));
+}
+function dtStep(){
+  if(dtIvs.length>120){setDTNote('Max reached. Reset.','已达上限，请重置。');return;}
+  const opt=dtGetOpt(),ok=new Set(opt.map(iv=>iv.a.toFixed(11)+','+iv.b.toFixed(11)));
+  const newI=[],rem=dtIvs.filter(iv=>!ok.has(iv.a.toFixed(11)+','+iv.b.toFixed(11)));
+  opt.forEach(iv=>{const c=(iv.a+iv.b)/2,w3=(iv.b-iv.a)/3;newI.push({a:iv.a,b:iv.a+w3,fc:dtF(iv.a+w3/2)},{a:iv.a+w3,b:iv.b-w3,fc:dtF(c)},{a:iv.b-w3,b:iv.b,fc:dtF(iv.b-w3/2)});});
+  dtIvs=[...rem,...newI];
+  const it=parseInt(document.getElementById('dt-i').textContent)+1;
+  document.getElementById('dt-i').textContent=it;
+  const best=dtIvs.reduce((a,b)=>a.fc<b.fc?a:b);
+  const bc=((best.a+best.b)/2).toFixed(4);
+  setDTNote(`Iter ${it}: split ${opt.length} interval(s). Total: ${dtIvs.length}. Best f(${bc})=${best.fc.toFixed(4)}.`,`第${it}步：分割${opt.length}个潜在最优区间，共${dtIvs.length}个。最优f(${bc})=${best.fc.toFixed(4)}。`);
+  dtDraw();
+}
+function setDTNote(en,zh){const n=document.getElementById('dt-note'),z=document.getElementById('dt-zh');if(n)n.textContent=en;if(z)z.textContent=zh;}
+function dtTab(t){
+  dtTabCur=t;
+  ['iv','sp'].forEach(x=>{
+    const b=document.getElementById('dt-'+x+'-btn'),w=document.getElementById('dt-'+x+'-w');
+    if(b)b.className='vbtn'+(x===t?' act':'');if(w)w.style.display=x===t?'':'none';
+  });
+  dtDraw();
+}
+function dtDraw(){if(dtTabCur==='iv')drawDTiv();else drawDTsp();}
+function drawDTiv(){
+  const cv=document.getElementById('dt-iv');if(!cv)return;
+  const[ctx,W,H]=rc(cv,240);const PL=46,PR=14,PT=12,PB=24,w=W-PL-PR,h=H-PT-PB;
+  const xP=x=>PL+x*w,yP=y=>PT+(1-(y+0.4)/3.8)*h;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.p2;ctx.fillRect(PL,PT,w,h);
+  const opt=dtGetOpt(),ok=new Set(opt.map(iv=>iv.a.toFixed(11)+','+iv.b.toFixed(11)));
+  dtIvs.forEach(iv=>{const isO=ok.has(iv.a.toFixed(11)+','+iv.b.toFixed(11));const p1=xP(iv.a),p2=xP(iv.b);
+    ctx.fillStyle=isO?'rgba(58,122,114,0.18)':'rgba(184,96,64,0.07)';ctx.fillRect(p1,PT,p2-p1,h);
+    ctx.strokeStyle=isO?'rgba(58,122,114,0.85)':'rgba(184,96,64,0.22)';ctx.lineWidth=isO?1.5:0.5;ctx.strokeRect(p1,PT,p2-p1,h);});
+  ctx.strokeStyle=C.olive;ctx.lineWidth=2;ctx.beginPath();
+  for(let k=0;k<=500;k++){const xv=k/500;const py=yP(dtF(xv));k===0?ctx.moveTo(xP(xv),py):ctx.lineTo(xP(xv),py);}ctx.stroke();
+  const seen=new Set();dtIvs.forEach(iv=>{const c=(iv.a+iv.b)/2,ck=c.toFixed(8);if(seen.has(ck))return;seen.add(ck);
+    ctx.beginPath();ctx.arc(xP(c),yP(iv.fc),3.5,0,2*Math.PI);ctx.fillStyle=C.navy;ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=0.7;ctx.stroke();});
+  ctx.strokeStyle='rgba(100,70,30,0.22)';ctx.lineWidth=0.7;ctx.beginPath();ctx.moveTo(PL,PT);ctx.lineTo(PL,PT+h);ctx.lineTo(PL+w,PT+h);ctx.stroke();
+  ctx.fillStyle=C.ink3;ctx.font='10px serif';ctx.textAlign='center';
+  [0,0.25,0.5,0.75,1].forEach(v=>ctx.fillText(v.toFixed(2),xP(v),PT+h+14));
+}
+function drawDTsp(){
+  const cv=document.getElementById('dt-sp');if(!cv)return;
+  const[ctx,W,H]=rc(cv,320);const PL=58,PR=20,PT=16,PB=42,w=W-PL-PR,h=H-PT-PB;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle=C.p2;ctx.fillRect(PL,PT,w,h);
+  const pts=dtIvs.map(iv=>({r:(iv.b-iv.a)/2,fc:iv.fc,iv}));if(!pts.length)return;
+  const maxR=Math.max(...pts.map(p=>p.r))*1.12,minFC=Math.min(...pts.map(p=>p.fc))-0.3,maxFC=Math.max(...pts.map(p=>p.fc))+0.5;
+  const rP=r=>PL+r/maxR*w,fP=fc=>PT+(1-(fc-minFC)/(maxFC-minFC))*h;
+  ctx.strokeStyle='rgba(100,70,30,0.06)';ctx.lineWidth=0.5;
+  for(let yt=0;yt<=3;yt++){const py=fP(yt);if(py>PT&&py<PT+h){ctx.beginPath();ctx.moveTo(PL,py);ctx.lineTo(PL+w,py);ctx.stroke();}}
+  // hull
+  const byR={};pts.forEach(p=>{const k=p.r.toFixed(11);if(!(k in byR)||p.fc<byR[k].fc)byR[k]=p;});
+  const uniq=Object.values(byR).sort((a,b)=>a.r-b.r);
+  if(uniq.length>=2){
+    const hull=[];for(const p of uniq){while(hull.length>=2){const a=hull[hull.length-2],b=hull[hull.length-1];if((p.fc-b.fc)/(p.r-b.r)<=(b.fc-a.fc)/(b.r-a.r))hull.pop();else break;}hull.push(p);}
+    ctx.fillStyle='rgba(176,128,48,0.09)';ctx.beginPath();ctx.moveTo(rP(hull[0].r),fP(hull[0].fc));hull.forEach(p=>ctx.lineTo(rP(p.r),fP(p.fc)));ctx.lineTo(rP(hull[hull.length-1].r),PT+h);ctx.lineTo(rP(hull[0].r),PT+h);ctx.closePath();ctx.fill();
+    ctx.strokeStyle=C.gold;ctx.lineWidth=1.8;ctx.setLineDash([5,4]);ctx.beginPath();hull.forEach((p,i)=>{i===0?ctx.moveTo(rP(p.r),fP(p.fc)):ctx.lineTo(rP(p.r),fP(p.fc));});ctx.stroke();ctx.setLineDash([]);
+  }
+  const opt=dtGetOpt(),ok=new Set(opt.map(iv=>iv.a.toFixed(11)+','+iv.b.toFixed(11)));
+  pts.forEach(p=>{const isO=ok.has(p.iv.a.toFixed(11)+','+p.iv.b.toFixed(11));const px=rP(p.r),py=fP(p.fc);
+    ctx.beginPath();ctx.arc(px,py,isO?7:4.5,0,2*Math.PI);ctx.fillStyle=isO?C.teal:C.navy;ctx.globalAlpha=isO?1:0.7;ctx.fill();ctx.globalAlpha=1;
+    ctx.strokeStyle=isO?'rgba(58,122,114,0.8)':'rgba(255,255,255,0.4)';ctx.lineWidth=isO?1.5:0.7;ctx.stroke();});
+  ctx.strokeStyle='rgba(100,70,30,0.22)';ctx.lineWidth=0.7;ctx.beginPath();ctx.moveTo(PL,PT);ctx.lineTo(PL,PT+h);ctx.lineTo(PL+w,PT+h);ctx.stroke();
+  ctx.fillStyle=C.ink3;ctx.font='10px serif';ctx.textAlign='center';ctx.fillText('0',rP(0),PT+h+14);ctx.fillText('r (half-width) →',PL+w-30,PT+h+28);
+  ctx.save();ctx.translate(13,PT+h/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.fillText('f(c) ↑',0,0);ctx.restore();
+}
+
+// ═══════════════════════════════════════
+// INITS
+// ═══════════════════════════════════════
+const INITS={
+  cyclic:()=>{cyReset();window.addEventListener('resize',cyDraw);},
+  nelder:()=>{nmReset();window.addEventListener('resize',nmDraw);},
+  direct:()=>{lbReset();dtReset();window.addEventListener('resize',()=>{lbDraw();dtDraw();});},
+};
+
+// ═══════════════════════════════════════
+// QUIZ
+// ═══════════════════════════════════════
+const QB=[
+  {q:'Which method is best described as "axis-by-axis line search"?',zh:'哪种方法最适合概括为"沿各坐标轴依次做线搜索"？',opts:['DIRECT','Cyclic Coordinate Search','Nelder-Mead','Hooke-Jeeves'],a:1,exp:'Cyclic Coordinate Search repeatedly performs line searches along coordinate directions. 循环坐标搜索的核心就是沿坐标方向反复做一维线搜索。'},
+  {q:"What is the central motivation for Powell's method over Cyclic?",zh:'Powell 相比 Cyclic 的核心动机是什么？',opts:['Need for global convergence','Need to adapt directions beyond fixed axes','Need to avoid bounded domains','Need to use a simplex'],a:1,exp:'Powell addresses the rigidity of axis-aligned directions by learning new directions from actual progress. 解决坐标轴方向太僵硬的问题，用实际进展方向自适应更新方向集。'},
+  {q:'In Hooke-Jeeves, what happens if no exploratory move improves the objective?',zh:'Hooke-Jeeves 中，如果探索步没有改进，通常怎么做？',opts:['Expand the simplex','Reset to origin','Shrink the step size α','Switch to DIRECT'],a:2,exp:'Hooke-Jeeves reduces step size when local probing finds no improvement. 若附近试探没有改进，就缩小步长 α。'},
+  {q:'What condition on the direction set is crucial in generalized pattern search?',zh:'广义模式搜索中，方向集最关键的条件是什么？',opts:['Orthogonality','Positive spanning','Conjugacy','Randomness'],a:1,exp:'A positive spanning set ensures existence of a descent direction away from stationary points. 正生成集保证在非稳定点处总存在下降方向。'},
+  {q:'Which method maintains n+1 vertices and deforms them geometrically?',zh:'哪种方法维护 n+1 个顶点并通过几何变形来更新？',opts:['Powell','Hooke-Jeeves','Nelder-Mead','DIRECT'],a:2,exp:'Nelder-Mead works with a simplex, which has n+1 vertices in n dimensions. Nelder-Mead 用单纯形（n 维时有 n+1 个顶点）做几何变形。'},
+  {q:'Which is NOT one of the four Nelder-Mead operations?',zh:'哪一个不是 Nelder-Mead 的四种经典操作？',opts:['Reflection 反射','Expansion 扩展','Contraction 收缩','Triangulation'],a:3,exp:'The four canonical operations are: reflection, expansion, contraction, shrinkage. 四种操作是：反射、扩展、收缩、缩减。没有 triangulation。'},
+  {q:'What is the key idea behind DIRECT\'s "potentially optimal" selection rule?',zh:'DIRECT 的"潜在最优"选择规则的关键思想是什么？',opts:['Always split the smallest rectangle','Choose intervals optimal for some Lipschitz constant','Choose the rectangle with the lowest centre value','Split randomly'],a:1,exp:'DIRECT selects rectangles that could be best for some valid ℓ — the convex hull rule in (r, f(c)) space. 凸壳规则选取对某个有效 ℓ 而言可能最优的区间。'},
+  {q:'Why is DIRECT the chapter\'s only global method?',zh:'为什么 DIRECT 是本章唯一的全局方法？',opts:['It uses gradient information','It systematically partitions the entire domain rather than searching from one point','It always finds the exact minimum','It requires the least evaluations'],a:1,exp:'DIRECT changes the search unit from a point to a region, systematically covering the entire domain. DIRECT 将搜索对象从点升级为区域，系统性地覆盖整个搜索域。'},
+  {q:'What textbook warning is attached to Powell\'s method?',zh:'教材对 Powell 方法给出的典型警告是什么？',opts:['Direction set may become linearly dependent','Requires known Lipschitz constant','Cannot handle quadratic functions','Only works in 2D'],a:0,exp:"Powell's updated directions can become linearly dependent, so periodic resets to the coordinate basis are recommended. 方向集可能线性相关，建议每 n 或 n+1 轮重置为坐标基。"},
+  {q:'What does Nelder-Mead use as its convergence criterion (as stated in the textbook)?',zh:'教材中 Nelder-Mead 使用什么作为收敛判据？',opts:['Norm of gradient','Standard deviation of simplex function values','Distance to the origin','Known Hessian eigenvalues'],a:1,exp:'The textbook uses the sample standard deviation of function values over the simplex vertices. 教材使用 simplex 上各顶点函数值的标准差。'},
+  {q:'What is the minimum number of directions needed in a positive spanning set for ℝⁿ?',zh:'ℝⁿ 中正生成集所需的最少方向数是多少？',opts:['n','n+1','2n','n²'],a:1,exp:'A minimum positive spanning set for ℝⁿ requires n+1 directions. ℝⁿ 中最小正生成集只需 n+1 个方向（比 Hooke-Jeeves 的 2n 方向更少）。'},
+  {q:'What does DIRECT avoid that Shubert-Piyavskii requires?',zh:'DIRECT 避免了 Shubert-Piyavskii 所需要的什么东西？',opts:['Bounded domain','Knowing the Lipschitz constant ℓ in advance','n+1 vertices','A starting point'],a:1,exp:'DIRECT avoids the need to specify the Lipschitz constant ℓ, using the convex hull rule to cover all possible values. DIRECT 通过凸壳规则同时覆盖所有可能的 ℓ 值，无需预先指定。'},
+];
+
+let CQ=[];
+function newQuiz(){
+  const shuffled=[...QB].sort(()=>Math.random()-.5);CQ=shuffled.slice(0,7).map((q,i)=>({...q,id:'q'+i}));
+  renderQuiz();
+  const sv=document.getElementById('score-val'),st=document.getElementById('score-txt'),se=document.getElementById('score-exp');
+  if(sv)sv.textContent='—';if(st)st.textContent='答题后点击 Submit & Score。';if(se)se.innerHTML='';
+}
+function renderQuiz(){
+  const m=document.getElementById('quiz-mount');if(!m)return;
+  m.innerHTML=CQ.map((q,idx)=>`
+    <div class="quiz-q" id="qw-${q.id}">
+      <h4>Q${idx+1}. ${q.q}</h4>
+      <div class="q-tools">
+        <button class="tiny-btn" onclick="document.getElementById('qtr-${q.id}').classList.toggle('show')">翻译/Translation</button>
+      </div>
+      <div class="q-tr" id="qtr-${q.id}">${q.zh}</div>
+      ${q.opts.map((opt,i)=>`<label class="q-opt"><input type="radio" name="${q.id}" value="${i}"> <span>${String.fromCharCode(65+i)}. ${opt}</span></label>`).join('')}
+      <div id="qrev-${q.id}"></div>
+    </div>`).join('');
+}
+function gradeQuiz(){
+  let score=0;
+  CQ.forEach((q,idx)=>{
+    const picked=document.querySelector(`input[name="${q.id}"]:checked`);
+    const val=picked?Number(picked.value):-1;
+    const ok=val===q.a;if(ok)score++;
+    const slot=document.getElementById(`qrev-${q.id}`);
+    const chosen=val>=0?`${String.fromCharCode(65+val)}. ${q.opts[val]}`:'(unanswered)';
+    slot.innerHTML=`<div class="q-review ${ok?'ok':'bad'}"><div><b>Your answer:</b> ${chosen}</div><div><b>Correct:</b> ${String.fromCharCode(65+q.a)}. ${q.opts[q.a]}</div><div style="margin-top:5px"><b>Explanation:</b> ${q.exp}</div></div>`;
+  });
+  const pct=Math.round(score/CQ.length*100);
+  const sv=document.getElementById('score-val'),st=document.getElementById('score-txt');
+  if(sv)sv.textContent=`${score}/${CQ.length}`;if(st)st.textContent=`${pct}% · ${score>=6?'Excellent!':score>=4?'Good — review the ones you missed.':'Keep studying — check explanations below.'}`;
+}
+
+newQuiz();
+showView('home');
+
+// m-card color accent mapping
+const MCOL={cyclic:'var(--blue)',powell:'var(--olive)',hooke:'var(--rust)',pattern:'var(--teal)',nelder:'var(--purple)',direct:'var(--teal)'};
+document.querySelectorAll('.m-card').forEach(c=>{
+  const id=c.getAttribute('onclick')?.match(/showDetail\('(\w+)'\)/)?.[1];
+  if(id&&MCOL[id])c.style.setProperty('--c',MCOL[id]);
+  if(c.style.getPropertyValue('--c'))c.style.setProperty('border-left-color',c.style.getPropertyValue('--c'));
+});
+// apply hover left border color
+document.querySelectorAll('.m-card').forEach(c=>{
+  const id=c.getAttribute('onclick')?.match(/showDetail\('(\w+)'\)/)?.[1];
+  if(!id)return;
+  const col={'cyclic':C.blue||'#4a6888','powell':C.olive||'#5a7848','hooke':C.rust,'pattern':C.teal,'nelder':'#6a5888','direct':C.teal};
+  const raw=col[id]||C.rust;
+  const after=document.createElement('style');after.textContent=`.m-card-${id}::before{background:${raw}!important;}`;
+  document.head.appendChild(after);
+  c.classList.add('m-card-'+id);
+});
+
+document.querySelectorAll('.m-card').forEach(card=>{
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect();
+    card.style.setProperty('--mx', ((e.clientX-r.left)/r.width*100)+'%');
+    card.style.setProperty('--my', ((e.clientY-r.top)/r.height*100)+'%');
+  });
+});
+</script>
+</body>
+</html>
