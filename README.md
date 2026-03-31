@@ -104,4 +104,4 @@ It aims to turn a textbook chapter into a more intuitive and interactive web-bas
 > Add your GitHub Pages link here after deployment:
 
 ```text
-https://your-username.github.io/your-repository-name/
+https://gloriashang.github.io/optimization-ch7-direct-methods/
